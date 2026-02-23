@@ -3,25 +3,77 @@ package org.br.ltec.crmbackend.crm.paciente.infra.persistence.jpa;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
-@Table(name = "pacientes",
+@Table(
+        name = "pacientes",
         indexes = {
                 @Index(name = "idx_paciente_documento", columnList = "documento_numero", unique = true),
                 @Index(name = "idx_paciente_email", columnList = "email", unique = true),
                 @Index(name = "idx_paciente_nome", columnList = "nome_completo"),
                 @Index(name = "idx_paciente_cidade", columnList = "cidade")
-        })
+        }
+)
 @Getter
 @Setter
-public class PacienteJpaEntity {
+public class PacienteJpaEntity implements Persistable<UUID> {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(name = "id", nullable = false, updatable = false)
   private UUID id;
+
+  /**
+   * Spring Data usa isNew() para decidir INSERT vs UPDATE.
+   * - true  -> INSERT
+   * - false -> UPDATE
+   */
+  @Transient
+  private boolean isNew = true;
+
+  @Override
+  public UUID getId() {
+    return id;
+  }
+
+  /**
+   * Importante:
+   * - Se id == null => é novo (INSERT)
+   * - Se isNew == true => é novo (INSERT)
+   * - Caso contrário => UPDATE
+   */
+  @Override
+  public boolean isNew() {
+    return this.isNew || this.id == null;
+  }
+
+  @PostLoad
+  protected void markNotNew() {
+    this.isNew = false;
+  }
+
+  @PrePersist
+  protected void prePersist() {
+    // Gera UUID se você estiver criando e não informou id.
+    if (this.id == null) {
+      this.id = UUID.randomUUID();
+    }
+    this.isNew = true;
+
+    // se quiser controlar createdAt:
+    if (this.criadoEm == null) {
+      this.criadoEm = LocalDate.now();
+    }
+  }
+
+  @PreUpdate
+  protected void preUpdate() {
+    this.isNew = false;
+    this.atualizadoEm = LocalDate.now();
+  }
 
   @Column(name = "primeiro_nome", nullable = false, length = 50)
   private String primeiroNome;
@@ -78,7 +130,7 @@ public class PacienteJpaEntity {
   @Column(name = "pais", length = 50)
   private String pais = "Brasil";
 
-  // Telefones (armazenados como JSON string)
+  // Telefones (armazenados como string)
   @Column(name = "telefones", columnDefinition = "TEXT")
   private String telefones;
 
@@ -100,9 +152,4 @@ public class PacienteJpaEntity {
 
   @Column(name = "atualizado_em")
   private LocalDate atualizadoEm;
-
-  @PreUpdate
-  protected void onUpdate() {
-    this.atualizadoEm = LocalDate.now();
-  }
 }

@@ -46,7 +46,7 @@ public class LoginUseCase {
               .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + command.getEmail()));
 
       // Verificar se usuário está ativo
-      if (!user.getAtivo()) {
+      if (!user.isAtivo()) {
         throw new IllegalArgumentException("Usuário desativado");
       }
 
@@ -66,12 +66,12 @@ public class LoginUseCase {
             .orElseThrow(() -> new IllegalArgumentException("Credenciais inválidas"));
 
     // Verificar senha
-    if (!passwordEncoder.matches(command.getSenha(), user.getSenha())) {
+    if (!passwordEncoder.matches(command.getSenha(), user.getSenhaHash())) {
       throw new IllegalArgumentException("Credenciais inválidas");
     }
 
     // Verificar se usuário está ativo
-    if (!user.getAtivo()) {
+    if (!user.isAtivo()) {
       throw new IllegalArgumentException("Usuário desativado");
     }
 

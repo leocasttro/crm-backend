@@ -11,48 +11,27 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-@RequiredArgsConstructor
 public class UserRepositoryJpaAdapter implements UserRepository {
 
-  private final SpringDataUserJpaRepository springDataRepository;
+  private final SpringDataUserJpaRepository jpa;
+
+  public UserRepositoryJpaAdapter(SpringDataUserJpaRepository jpa) {
+    this.jpa = jpa;
+  }
 
   @Override
   public User save(User user) {
-    return springDataRepository.save(user);
+    var saved = jpa.save(UserJpaMapper.toEntity(user));
+    return UserJpaMapper.toDomain(saved);
   }
 
   @Override
   public Optional<User> findById(UUID id) {
-    return springDataRepository.findById(id);
+    return jpa.findById(id).map(UserJpaMapper::toDomain);
   }
 
   @Override
   public Optional<User> findByEmail(Email email) {
-    return springDataRepository.findByEmailValue(email.getValue());
-  }
-
-  @Override
-  public List<User> findAll() {
-    return springDataRepository.findAll();
-  }
-
-  @Override
-  public List<User> findByRole(String role) {
-    return springDataRepository.findByRole(org.br.ltec.crmbackend.crm.auth.domain.valueObject.Role.valueOf(role));
-  }
-
-  @Override
-  public boolean existsByEmail(Email email) {
-    return springDataRepository.existsByEmailValue(email.getValue());
-  }
-
-  @Override
-  public void deleteById(UUID id) {
-    springDataRepository.deleteById(id);
-  }
-
-  @Override
-  public void delete(User user) {
-    springDataRepository.delete(user);
+    return jpa.findByEmail(email).map(UserJpaMapper::toDomain);
   }
 }

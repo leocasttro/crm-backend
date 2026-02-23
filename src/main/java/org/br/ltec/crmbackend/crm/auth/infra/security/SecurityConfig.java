@@ -17,6 +17,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -31,18 +36,16 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
             .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> {})
             .authorizeHttpRequests(auth -> auth
-                    // Coloque os públicos primeiro e de forma explícita
                     .requestMatchers("/api/auth/login").permitAll()
                     .requestMatchers("/api/auth/register").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()  // mantém o genérico também
                     .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-                    // Depois as regras restritas
                     .requestMatchers("/api/pacientes/**").authenticated()
                     .requestMatchers("/api/pedidos/**").authenticated()
 
-                    // Qualquer outra coisa exige autenticação
                     .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
@@ -70,5 +73,19 @@ public class SecurityConfig {
   @Bean
   public PasswordEncoder passwordEncoder() {
     return new BCryptPasswordEncoder();
+  }
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+
+    configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
   }
 }

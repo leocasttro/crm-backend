@@ -25,13 +25,11 @@ public class UserJpaEntity {
   private String nome;
 
   @Embedded
-  @AttributeOverrides({
-          @AttributeOverride(name = "value", column = @Column(name = "email"))
-  })
+  @AttributeOverride(name = "value", column = @Column(name = "email", unique = true, nullable = false))
   private Email email;
 
   @Column(name = "senha", nullable = false)
-  private String senha;
+  private String senhaHash;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "role", nullable = false)

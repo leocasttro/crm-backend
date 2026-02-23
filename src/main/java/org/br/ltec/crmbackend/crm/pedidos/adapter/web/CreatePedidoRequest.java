@@ -1,11 +1,13 @@
 package org.br.ltec.crmbackend.crm.pedidos.adapter.web;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
+import org.br.ltec.crmbackend.crm.paciente.application.command.CreatePacienteCommand;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,8 +16,10 @@ import java.time.LocalDateTime;
 @Setter
 public class CreatePedidoRequest {
 
-  @NotBlank(message = "ID do paciente é obrigatório")
   private String pacienteId;
+
+  @Valid
+  private CreatePacienteCommand paciente;
 
   // Campos do Médico (3 parâmetros)
   @NotBlank(message = "Nome do médico solicitante é obrigatório")

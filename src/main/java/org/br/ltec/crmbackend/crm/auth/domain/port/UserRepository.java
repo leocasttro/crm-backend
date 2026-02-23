@@ -11,9 +11,4 @@ public interface UserRepository {
   User save(User user);
   Optional<User> findById(UUID id);
   Optional<User> findByEmail(Email email);
-  List<User> findAll();
-  List<User> findByRole(String role);
-  boolean existsByEmail(Email email);
-  void deleteById(UUID id);
-  void delete(User user);
 }

@@ -2,15 +2,20 @@ package org.br.ltec.crmbackend.crm.pedidos.adapter.web;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
+import org.br.ltec.crmbackend.crm.paciente.application.command.CreatePacienteCommand;
+import org.br.ltec.crmbackend.crm.paciente.application.useCase.CreatePacienteUseCase;
+import org.br.ltec.crmbackend.crm.paciente.domain.model.Paciente;
 import org.br.ltec.crmbackend.crm.pedidos.application.command.*;
 import org.br.ltec.crmbackend.crm.pedidos.application.useCase.*;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoCirurgico;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.*;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +31,29 @@ public class PedidoController {
   private final AgendarPedidoUseCase agendarUseCase;
   private final StatusPedidoUseCase statusUseCase;
   private final UpdatePedidoUseCase updateUseCase;
+  private final CreatePedidoFromPdfUseCase createFromPdfUseCase;
+
+  // ✅ NOVO: para criar paciente dentro do POST /api/pedidos quando pacienteId não vier
+  private final CreatePacienteUseCase createPacienteUseCase;
 
   @PostMapping
   public ResponseEntity<PedidoResponse> criar(@Valid @RequestBody CreatePedidoRequest req) {
+
+    // ✅ Resolver pacienteId:
+    // - se veio pacienteId -> usa
+    // - se não veio -> cria paciente com req.getPaciente() e usa o id gerado
+    String pacienteId = req.getPacienteId();
+
+    if (pacienteId == null || pacienteId.isBlank()) {
+      CreatePacienteCommand pacienteCmd = req.getPaciente();
+
+      if (pacienteCmd == null) {
+        throw new IllegalArgumentException("Informe pacienteId ou os dados do paciente (campo 'paciente').");
+      }
+
+      Paciente pacienteCriado = createPacienteUseCase.execute(pacienteCmd);
+      pacienteId = pacienteCriado.getId().getValue().toString();
+    }
 
     // Converter string para enum de Prioridade
     Prioridade.Tipo tipoPrioridade = Prioridade.Tipo.fromString(req.getPrioridade());
@@ -37,7 +62,7 @@ public class PedidoController {
     CreatePedidoCommand command = new CreatePedidoCommand();
 
     // Configurar campos básicos
-    command.setPacienteId(req.getPacienteId());
+    command.setPacienteId(pacienteId);
     command.setUsuarioCriacao("usuario_atual");
     command.setDataPedido(req.getDataPedido() != null ? req.getDataPedido() : LocalDate.now());
 
@@ -96,11 +121,13 @@ public class PedidoController {
   public ResponseEntity<List<PedidoResponse>> listar(
           @RequestParam(defaultValue = "0") int page,
           @RequestParam(defaultValue = "20") int size) {
+
     List<PedidoCirurgico> pedidos = findUseCase.findAll(page, size);
 
     List<PedidoResponse> dtos = pedidos.stream()
             .map(this::toResponse)
             .collect(Collectors.toList());
+
     return ResponseEntity.ok(dtos);
   }
 
@@ -108,25 +135,41 @@ public class PedidoController {
   public ResponseEntity<PedidoDetalhadoResponse> buscarPorId(@PathVariable String id) {
     PedidoCirurgico pedido = findUseCase.findById(id)
             .orElseThrow(() -> new RuntimeException("Pedido não encontrado com id: " + id));
+
     return ResponseEntity.ok(toDetalhadoResponse(pedido));
   }
 
-  // Outros endpoints (exemplo rápido)
   @PatchMapping("/{id}/agendar")
   public ResponseEntity<PedidoResponse> agendar(
           @PathVariable String id,
           @RequestBody AgendamentoPedidoCommand command) {
+
     command.setPedidoId(id);
     PedidoCirurgico atualizado = agendarUseCase.execute(command);
+
     return ResponseEntity.ok(toResponse(atualizado));
   }
 
+  @PostMapping(value = "/importar-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  public ResponseEntity<PedidoResponse> importarPdf(
+          @RequestPart("pdf") MultipartFile pdf,
+          @RequestParam("pacienteId") String pacienteId
+  ) throws IOException {
+
+    CreatePedidoFromPdfCommand cmd = new CreatePedidoFromPdfCommand();
+    cmd.setPdfBytes(pdf.getBytes());
+    cmd.setOriginalFilename(pdf.getOriginalFilename());
+    cmd.setContentType(pdf.getContentType());
+    cmd.setPacienteId(pacienteId);
+
+    PedidoCirurgico pedido = createFromPdfUseCase.execute(cmd);
+    return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(pedido));
+  }
 
   private PedidoResponse toResponse(PedidoCirurgico p) {
     return PedidoResponse.builder()
-            .id(p.getId().getValue().toString()) // ← Converta UUID para String
-            .pacienteId(p.getPacienteId().getValue().toString()) // ← Idem para pacienteId
-            // .pacienteNome(...)
+            .id(p.getId().getValue().toString())
+            .pacienteId(p.getPacienteId().getValue().toString())
             .medicoSolicitante(p.getMedicoSolicitante().getNome())
             .medicoSolicitanteEspecialidade(p.getMedicoSolicitante().getEspecialidade())
             .procedimento(p.getProcedimento().getDescricao())
@@ -149,9 +192,8 @@ public class PedidoController {
 
   private PedidoDetalhadoResponse toDetalhadoResponse(PedidoCirurgico p) {
     return PedidoDetalhadoResponse.builder()
-            .id(p.getId().getValue().toString()) // ← UUID para String
-            .pacienteId(p.getPacienteId().getValue().toString()) // ← UUID para String
-            // .pacienteNome(...)
+            .id(p.getId().getValue().toString())
+            .pacienteId(p.getPacienteId().getValue().toString())
             .medicoSolicitante(p.getMedicoSolicitante().getNome())
             .medicoSolicitanteCrm(p.getMedicoSolicitante().getCrm())
             .medicoExecutor(p.temMedicoExecutor() ? p.getMedicoExecutor().getNome() : null)

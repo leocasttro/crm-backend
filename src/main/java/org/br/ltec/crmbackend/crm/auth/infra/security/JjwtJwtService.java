@@ -71,7 +71,19 @@ public class JjwtJwtService implements JwtService {
     claims.put("userId", user.getId().toString());
     claims.put("nome", user.getNome());
 
-    return generateToken(claims, user);
+    // subject = username (email)
+    return generateTokenWithSubject(claims, user.getEmail().getValue());
+  }
+
+  private String generateTokenWithSubject(Map<String, Object> extraClaims, String subject) {
+    return Jwts
+            .builder()
+            .setClaims(extraClaims)
+            .setSubject(subject)
+            .setIssuedAt(new Date(System.currentTimeMillis()))
+            .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+            .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+            .compact();
   }
 
   private String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {

@@ -55,7 +55,7 @@ public class AuthController {
             .nome(user.getNome())
             .email(user.getEmail().getValue())
             .role(user.getRole())
-            .ativo(user.getAtivo())
+            .ativo(user.isAtivo())
             .criadoEm(user.getCriadoEm())
             .build();
   }

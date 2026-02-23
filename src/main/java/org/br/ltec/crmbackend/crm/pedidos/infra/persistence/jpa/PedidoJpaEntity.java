@@ -3,13 +3,15 @@ package org.br.ltec.crmbackend.crm.pedidos.infra.persistence.jpa;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "pedidos_cirurgicos",
+@Table(
+        name = "pedidos_cirurgicos",
         indexes = {
                 @Index(name = "idx_pedido_paciente", columnList = "paciente_id"),
                 @Index(name = "idx_pedido_status", columnList = "status"),
@@ -19,14 +21,58 @@ import java.util.UUID;
                 @Index(name = "idx_pedido_data_agendamento", columnList = "agendamento_data_hora"),
                 @Index(name = "idx_pedido_data_criacao", columnList = "criado_em"),
                 @Index(name = "idx_pedido_prioridade", columnList = "prioridade")
-        })
+        }
+)
 @Getter
 @Setter
-public class PedidoJpaEntity {
+public class PedidoJpaEntity implements Persistable<UUID> {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
+  @Column(name = "id", nullable = false, updatable = false)
   private UUID id;
+
+  // ✅ Spring Data usa isso pra decidir INSERT vs UPDATE
+  @Transient
+  private boolean isNew = true;
+
+  @Override
+  public UUID getId() {
+    return id;
+  }
+
+  @Override
+  public boolean isNew() {
+    // se id ainda não existe, é novo
+    return isNew || id == null;
+  }
+
+  @PostLoad
+  protected void markNotNew() {
+    this.isNew = false;
+  }
+
+  @PrePersist
+  protected void prePersist() {
+    this.isNew = true;
+
+    // ✅ garante id mesmo se vier null
+    if (this.id == null) {
+      this.id = UUID.randomUUID();
+    }
+
+    // datas padrão
+    this.criadoEm = LocalDateTime.now();
+    this.dataPedido = LocalDate.now();
+
+    calcularCamposDerivados();
+  }
+
+  @PreUpdate
+  protected void preUpdate() {
+    this.isNew = false;
+    this.atualizadoEm = LocalDateTime.now();
+    calcularCamposDerivados();
+  }
 
   // Referência ao paciente
   @Column(name = "paciente_id", nullable = false)
@@ -156,24 +202,18 @@ public class PedidoJpaEntity {
   @Column(name = "finalizado")
   private Boolean finalizado;
 
-  @PrePersist
-  protected void onCreate() {
-    criadoEm = LocalDateTime.now();
-    dataPedido = LocalDate.now();
-    calcularCamposDerivados();
-  }
-
-  @PreUpdate
-  protected void onUpdate() {
-    atualizadoEm = LocalDateTime.now();
-    calcularCamposDerivados();
-  }
-
   private void calcularCamposDerivados() {
     this.temAgendamento = agendamentoDataHora != null;
     this.temCid = cidCodigo != null && !cidCodigo.trim().isEmpty();
     this.temDocumentos = documentosAnexados != null && !documentosAnexados.trim().isEmpty();
-    this.ativo = !status.equals("REALIZADO") && !status.equals("CANCELADO") && !status.equals("REJEITADO");
-    this.finalizado = status.equals("REALIZADO") || status.equals("CANCELADO") || status.equals("REJEITADO");
+
+    // cuidado: status pode estar null se mapper não setar (se for teu caso, trate aqui)
+    if (status != null) {
+      this.ativo = !status.equals("REALIZADO") && !status.equals("CANCELADO") && !status.equals("REJEITADO");
+      this.finalizado = status.equals("REALIZADO") || status.equals("CANCELADO") || status.equals("REJEITADO");
+    } else {
+      this.ativo = true;
+      this.finalizado = false;
+    }
   }
 }

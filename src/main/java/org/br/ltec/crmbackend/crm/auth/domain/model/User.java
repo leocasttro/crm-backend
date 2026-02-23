@@ -1,100 +1,85 @@
 package org.br.ltec.crmbackend.crm.auth.domain.model;
 
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.br.ltec.crmbackend.crm.auth.domain.valueObject.Email;
 import org.br.ltec.crmbackend.crm.auth.domain.valueObject.Role;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
-@Entity
-@Table(name = "usuarios")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class User implements UserDetails {
+public class User {
+  private final UUID id;
+  private final String nome;
+  private final Email email;
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
-  private UUID id;
+  // idealmente "senha" no domínio é um hash (não a senha em texto)
+  private final String senhaHash;
 
-  @Column(nullable = false)
-  private String nome;
+  private final Role role;
+  private final boolean ativo;
 
-  @Embedded
-  @AttributeOverride(name = "value", column = @Column(name = "email", unique = true, nullable = false))
-  private Email email;
+  private final LocalDateTime criadoEm;
+  private final LocalDateTime atualizadoEm;
 
-  @Column(nullable = false)
-  private String senha;
-
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private Role role;
-
-  @Column(nullable = false)
-  private Boolean ativo;
-
-  @Column(name = "criado_em", nullable = false, updatable = false)
-  private LocalDateTime criadoEm;
-
-  @Column(name = "atualizado_em")
-  private LocalDateTime atualizadoEm;
-
-  @PrePersist
-  protected void onCreate() {
-    criadoEm = LocalDateTime.now();
-    ativo = true;
+  private User(
+          UUID id,
+          String nome,
+          Email email,
+          String senhaHash,
+          Role role,
+          boolean ativo,
+          LocalDateTime criadoEm,
+          LocalDateTime atualizadoEm
+  ) {
+    this.id = Objects.requireNonNull(id, "id");
+    this.nome = Objects.requireNonNull(nome, "nome");
+    this.email = Objects.requireNonNull(email, "email");
+    this.senhaHash = Objects.requireNonNull(senhaHash, "senhaHash");
+    this.role = Objects.requireNonNull(role, "role");
+    this.ativo = ativo;
+    this.criadoEm = Objects.requireNonNull(criadoEm, "criadoEm");
+    this.atualizadoEm = atualizadoEm; // pode ser null em criação
   }
 
-  @PreUpdate
-  protected void onUpdate() {
-    atualizadoEm = LocalDateTime.now();
+  public static User novo(String nome, Email email, String senhaHash, Role role) {
+    Objects.requireNonNull(nome, "nome");
+    Objects.requireNonNull(email, "email");
+    Objects.requireNonNull(senhaHash, "senhaHash");
+    Objects.requireNonNull(role, "role");
+
+    var agora = LocalDateTime.now();
+    return new User(UUID.randomUUID(), nome, email, senhaHash, role, true, agora, null);
   }
 
-  // Implementação UserDetails
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    return List.of(new SimpleGrantedAuthority(role.name()));
+  public static User reconstituir(
+          UUID id,
+          String nome,
+          Email email,
+          String senhaHash,
+          Role role,
+          boolean ativo,
+          LocalDateTime criadoEm,
+          LocalDateTime atualizadoEm
+  ) {
+    return new User(id, nome, email, senhaHash, role, ativo, criadoEm, atualizadoEm);
   }
 
-  @Override
-  public String getPassword() {
-    return senha;
+  public User desativar() {
+    if (!ativo) return this;
+    return new User(id, nome, email, senhaHash, role, false, criadoEm, LocalDateTime.now());
   }
 
-  @Override
-  public String getUsername() {
-    return email.getValue();
+  public User ativar() {
+    if (ativo) return this;
+    return new User(id, nome, email, senhaHash, role, true, criadoEm, LocalDateTime.now());
   }
 
-  @Override
-  public boolean isAccountNonExpired() {
-    return true;
-  }
-
-  @Override
-  public boolean isAccountNonLocked() {
-    return true;
-  }
-
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return true;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return ativo;
-  }
+  public UUID getId() { return id; }
+  public String getNome() { return nome; }
+  public Email getEmail() { return email; }
+  public String getSenhaHash() { return senhaHash; }
+  public Role getRole() { return role; }
+  public boolean isAtivo() { return ativo; }
+  public LocalDateTime getCriadoEm() { return criadoEm; }
+  public LocalDateTime getAtualizadoEm() { return atualizadoEm; }
 }

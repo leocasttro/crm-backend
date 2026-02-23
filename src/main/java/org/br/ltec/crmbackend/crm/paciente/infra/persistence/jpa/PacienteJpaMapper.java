@@ -6,7 +6,6 @@ import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.*;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -19,7 +18,7 @@ public class PacienteJpaMapper {
 
     PacienteJpaEntity entity = new PacienteJpaEntity();
 
-    // ID
+    // ID (se vier null, deixa null -> @PrePersist gera UUID)
     if (paciente.getId() != null) {
       entity.setId(paciente.getId().getValue());
     }
@@ -57,8 +56,9 @@ public class PacienteJpaMapper {
     });
 
     // Telefones (serializar como string formatada)
-    if (!paciente.getTelefones().isEmpty()) {
+    if (paciente.getTelefones() != null && !paciente.getTelefones().isEmpty()) {
       StringBuilder telefonesStr = new StringBuilder();
+
       for (Telefone telefone : paciente.getTelefones()) {
         telefonesStr.append(telefone.getNumero())
                 .append(";")
@@ -67,11 +67,12 @@ public class PacienteJpaMapper {
                 .append(telefone.isWhatsApp())
                 .append("|");
       }
-      // Remove o último separador
-      if (telefonesStr.length() > 0) {
-        telefonesStr.deleteCharAt(telefonesStr.length() - 1);
-      }
+
+      // Remove o último separador "|"
+      telefonesStr.deleteCharAt(telefonesStr.length() - 1);
       entity.setTelefones(telefonesStr.toString());
+    } else {
+      entity.setTelefones(null);
     }
 
     // Campos calculados
@@ -88,7 +89,6 @@ public class PacienteJpaMapper {
     }
 
     try {
-      // Criar Value Objects
       PacienteId id = PacienteId.fromString(entity.getId().toString());
       NomeCompleto nome = new NomeCompleto(entity.getPrimeiroNome(), entity.getSobrenome());
 
@@ -101,7 +101,7 @@ public class PacienteJpaMapper {
       DataNascimento dataNascimento = new DataNascimento(entity.getDataNascimento());
       Sexo sexo = new Sexo(entity.getSexoCodigo());
 
-      // Criar endereço
+      // Endereço
       Endereco endereco = null;
       if (entity.getLogradouro() != null && !entity.getLogradouro().trim().isEmpty()) {
         endereco = new Endereco(
@@ -116,7 +116,7 @@ public class PacienteJpaMapper {
         );
       }
 
-      // Criar lista de telefones
+      // Telefones
       List<Telefone> telefones = new ArrayList<>();
       if (entity.getTelefones() != null && !entity.getTelefones().trim().isEmpty()) {
         String[] telefoneEntries = entity.getTelefones().split("\\|");
@@ -131,7 +131,6 @@ public class PacienteJpaMapper {
         }
       }
 
-      // Criar paciente
       return new PacienteBuilder()
               .comId(id)
               .comNome(nome)
