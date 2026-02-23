@@ -22,31 +22,23 @@ public class CreatePedidoRequest {
   private CreatePacienteCommand paciente;
 
   // Campos do Médico (3 parâmetros)
-  @NotBlank(message = "Nome do médico solicitante é obrigatório")
   @Size(min = 3, max = 100, message = "Nome do médico deve ter entre 3 e 100 caracteres")
   private String medicoSolicitanteNome;
 
-  @NotBlank(message = "CRM é obrigatório")
   @Pattern(regexp = "\\d{4,10}/[A-Z]{2}", message = "CRM deve estar no formato 0000/UF")
   private String medicoSolicitanteCrm;
 
   private String medicoSolicitanteEspecialidade;
 
-  // Campos do Procedimento (3 parâmetros)
-  @NotBlank(message = "Nome do procedimento é obrigatório")
   private String procedimentoNome;
 
-  @NotBlank(message = "Código do procedimento é obrigatório")
   @Pattern(regexp = "\\d{6,10}", message = "Código TUSS deve conter apenas números (6-10 dígitos)")
   private String procedimentoCodigo;
 
   private String procedimentoCategoria;
 
-  // Campos do Convênio (4 parâmetros)
-  @NotBlank(message = "Convênio é obrigatório")
   private String convenioNome;
 
-  @NotBlank(message = "Número da carteira é obrigatório")
   private String convenioNumeroCarteira;
 
   @NotNull(message = "Validade da carteira é obrigatória")

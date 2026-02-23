@@ -1,54 +1,76 @@
 package org.br.ltec.crmbackend.crm.pedidos.adapter.web;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ImportPedidoPdfResponse {
 
+  private boolean sucesso;
+  private String mensagem;
   private String pedidoId;
-
-  // opcional (ajuda debug/UX)
+  private String pacienteId;
   private String nomePaciente;
   private String convenio;
   private String cid;
-  private List<String> procedimentos;
+  private List<ProcedimentoResponse> procedimentos;
 
-  public String getPedidoId() {
-    return pedidoId;
+  private ImportPedidoPdfResponse() {}
+
+  // Factory method para sucesso (ATUALIZADO)
+  public static ImportPedidoPdfResponse sucesso(
+          String pedidoId,
+          String pacienteId,
+          String nomePaciente,
+          String convenio,
+          String cid,
+          List<ProcedimentoResponse> procedimentos) {  // ✅ NOVO PARÂMETRO
+
+    ImportPedidoPdfResponse response = new ImportPedidoPdfResponse();
+    response.sucesso = true;
+    response.mensagem = "PDF importado e pedido criado com sucesso";
+    response.pedidoId = pedidoId;
+    response.pacienteId = pacienteId;
+    response.nomePaciente = nomePaciente;
+    response.convenio = convenio;
+    response.cid = cid;
+    response.procedimentos = procedimentos;  // ✅ ATRIBUIR
+    return response;
   }
 
-  public void setPedidoId(String pedidoId) {
-    this.pedidoId = pedidoId;
+  // Factory method para erro
+  public static ImportPedidoPdfResponse erro(String mensagem) {
+    ImportPedidoPdfResponse response = new ImportPedidoPdfResponse();
+    response.sucesso = false;
+    response.mensagem = mensagem;
+    return response;
   }
 
-  public String getNomePaciente() {
-    return nomePaciente;
-  }
+  // Getters
+  public boolean isSucesso() { return sucesso; }
+  public String getMensagem() { return mensagem; }
+  public String getPedidoId() { return pedidoId; }
+  public String getPacienteId() { return pacienteId; }
+  public String getNomePaciente() { return nomePaciente; }
+  public String getConvenio() { return convenio; }
+  public String getCid() { return cid; }
+  public List<ProcedimentoResponse> getProcedimentos() { return procedimentos; }  // ✅ GETTER
 
-  public void setNomePaciente(String nomePaciente) {
-    this.nomePaciente = nomePaciente;
-  }
+  // Classe interna para procedimentos
+  public static class ProcedimentoResponse {
+    private String codigo;
+    private String descricao;
+    private String quantidade;
 
-  public String getConvenio() {
-    return convenio;
-  }
+    public ProcedimentoResponse(String codigo, String descricao, String quantidade) {
+      this.codigo = codigo;
+      this.descricao = descricao;
+      this.quantidade = quantidade;
+    }
 
-  public void setConvenio(String convenio) {
-    this.convenio = convenio;
-  }
-
-  public String getCid() {
-    return cid;
-  }
-
-  public void setCid(String cid) {
-    this.cid = cid;
-  }
-
-  public List<String> getProcedimentos() {
-    return procedimentos;
-  }
-
-  public void setProcedimentos(List<String> procedimentos) {
-    this.procedimentos = procedimentos;
+    // Getters
+    public String getCodigo() { return codigo; }
+    public String getDescricao() { return descricao; }
+    public String getQuantidade() { return quantidade; }
   }
 }

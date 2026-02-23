@@ -49,7 +49,7 @@ public class PedidoJpaMapper {
     // Convênio
     entity.setConvenioNome(pedido.getConvenio().getNome());
     entity.setConvenioNumeroCarteira(pedido.getConvenio().getNumeroCarteira());
-    entity.setConvenioValidadeCarteira(pedido.getConvenio().getValidadeCarteira());
+    entity.setConvenioValidadeCarteira(pedido.getConvenio().getValidade());
     entity.setConvenioTipoPlano(pedido.getConvenio().getTipoPlano());
 
     // CID

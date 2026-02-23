@@ -1,5 +1,6 @@
 package org.br.ltec.crmbackend.crm.pedidos.application.command;
 
+import org.br.ltec.crmbackend.crm.paciente.application.command.CreatePacienteCommand;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Lateralidade;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Prioridade;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.StatusPedido;
@@ -9,8 +10,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class CreatePedidoCommand {
-
+  private CreatePacienteCommand paciente;
+  // Campo existente - para usar paciente existente
   private String pacienteId;
+
   private String usuarioCriacao;
 
   // Médico Solicitante
@@ -60,7 +63,7 @@ public class CreatePedidoCommand {
 
   // Construtores
   public CreatePedidoCommand() {
-    this.status = StatusPedido.Tipo.RASCUNHO;
+    this.status = StatusPedido.Tipo.PENDENTE;
     this.dataPedido = LocalDate.now();
   }
 
@@ -279,5 +282,13 @@ public class CreatePedidoCommand {
 
   public void setDocumentosAnexados(List<String> documentosAnexados) {
     this.documentosAnexados = documentosAnexados;
+  }
+
+  public CreatePacienteCommand getPaciente() {
+    return paciente;
+  }
+
+  public void setPaciente(CreatePacienteCommand paciente) {
+    this.paciente = paciente;
   }
 }

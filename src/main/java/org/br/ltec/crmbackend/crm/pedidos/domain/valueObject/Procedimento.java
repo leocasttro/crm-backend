@@ -15,13 +15,6 @@ public class Procedimento {
   }
 
   private void validar(String codigoTUSS, String descricao) {
-    if (codigoTUSS == null || codigoTUSS.trim().isEmpty()) {
-      throw new IllegalArgumentException("Código TUSS é obrigatório");
-    }
-    if (!codigoTUSS.matches("\\d{6,10}")) {
-      throw new IllegalArgumentException("Código TUSS deve conter apenas números (6-10 dígitos)");
-    }
-
     if (descricao == null || descricao.trim().isEmpty()) {
       throw new IllegalArgumentException("Descrição do procedimento é obrigatória");
     }

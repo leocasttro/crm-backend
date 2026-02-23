@@ -4,37 +4,21 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 public class Convenio {
-  private final String nome;
-  private final String numeroCarteira;
-  private final LocalDate validadeCarteira;
-  private final String tipoPlano;
 
-  public Convenio(String nome, String numeroCarteira, LocalDate validadeCarteira, String tipoPlano) {
-    validar(nome, numeroCarteira, validadeCarteira);
-    this.nome = nome.trim();
-    this.numeroCarteira = numeroCarteira.trim();
-    this.validadeCarteira = validadeCarteira;
-    this.tipoPlano = tipoPlano != null ? tipoPlano.trim() : "";
+  private String nome;
+  private String numeroCarteira;
+  private LocalDate validade;
+  private String tipoPlano;
+
+  public Convenio(String nome, String numeroCarteira, LocalDate validade, String tipoPlano) {
+    // ✅ Tratar valores null
+    this.nome = nome != null ? nome.trim() : null;
+    this.numeroCarteira = numeroCarteira != null ? numeroCarteira.trim() : null;
+    this.validade = validade;
+    this.tipoPlano = tipoPlano;
   }
 
-  private void validar(String nome, String numeroCarteira, LocalDate validadeCarteira) {
-    if (nome == null || nome.trim().isEmpty()) {
-      throw new IllegalArgumentException("Nome do convênio é obrigatório");
-    }
-
-    if (numeroCarteira == null || numeroCarteira.trim().isEmpty()) {
-      throw new IllegalArgumentException("Número da carteira é obrigatório");
-    }
-
-    if (validadeCarteira == null) {
-      throw new IllegalArgumentException("Validade da carteira é obrigatória");
-    }
-
-    if (validadeCarteira.isBefore(LocalDate.now())) {
-      throw new IllegalArgumentException("Carteira do convênio está vencida");
-    }
-  }
-
+  // Getters
   public String getNome() {
     return nome;
   }
@@ -43,38 +27,11 @@ public class Convenio {
     return numeroCarteira;
   }
 
-  public LocalDate getValidadeCarteira() {
-    return validadeCarteira;
+  public LocalDate getValidade() {
+    return validade;
   }
 
   public String getTipoPlano() {
     return tipoPlano;
-  }
-
-  public boolean isValido() {
-    return validadeCarteira.isAfter(LocalDate.now()) || validadeCarteira.isEqual(LocalDate.now());
-  }
-
-  public String getNumeroFormatado() {
-    return numeroCarteira;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Convenio convenio = (Convenio) o;
-    return Objects.equals(numeroCarteira, convenio.numeroCarteira) &&
-            Objects.equals(nome, convenio.nome);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(nome, numeroCarteira);
-  }
-
-  @Override
-  public String toString() {
-    return nome + " - Carteira: " + numeroCarteira + " (Válida até: " + validadeCarteira + ")";
   }
 }

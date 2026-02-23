@@ -26,7 +26,6 @@ public class Paciente {
   public Paciente(PacienteId id, NomeCompleto nome, Documento documento,
                   Email email, DataNascimento dataNascimento, Sexo sexo,
                   Endereco endereco, List<Telefone> telefones) {
-    validarCriacao(nome, documento, email, dataNascimento, sexo);
     this.id = id;
     this.nome = nome;
     this.documento = documento;
@@ -42,12 +41,6 @@ public class Paciente {
                               Email email, DataNascimento dataNascimento, Sexo sexo) {
     if (nome == null) {
       throw new DomainException("Nome é obrigatório");
-    }
-    if (documento == null) {
-      throw new DomainException("Documento é obrigatório");
-    }
-    if (email == null) {
-      throw new DomainException("Email é obrigatório");
     }
     if (dataNascimento == null) {
       throw new DomainException("Data de nascimento é obrigatória");

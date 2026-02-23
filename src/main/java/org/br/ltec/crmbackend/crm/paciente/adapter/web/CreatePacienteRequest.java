@@ -20,13 +20,10 @@ public class CreatePacienteRequest {
   @Size(min = 2, max = 50, message = "Sobrenome deve ter entre 2 e 50 caracteres")
   private String sobrenome;
 
-  @NotBlank(message = "Documento é obrigatório")
   private String documentoNumero;
 
-  @NotNull(message = "Tipo de documento é obrigatório")
   private Documento.TipoDocumento documentoTipo;
 
-  @NotBlank(message = "Email é obrigatório")
   @Email(message = "Email deve ser válido")
   private String email;
 

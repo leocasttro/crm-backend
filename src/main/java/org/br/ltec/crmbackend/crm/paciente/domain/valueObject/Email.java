@@ -13,8 +13,16 @@ public class Email {
   private final String dominio;
 
   public Email(String endereco) {
-    validar(endereco);
-    this.endereco = endereco.toLowerCase().trim();
+    // ✅ PERMITE NULL AGORA
+    if (endereco == null || endereco.trim().isEmpty()) {
+      this.endereco = null;
+      this.dominio = null;
+      return;
+    }
+
+    String emailValidado = endereco.toLowerCase().trim();
+    validar(emailValidado);
+    this.endereco = emailValidado;
     this.dominio = extrairDominio(this.endereco);
   }
 
@@ -35,6 +43,7 @@ public class Email {
   }
 
   private String extrairDominio(String email) {
+    if (email == null) return null;
     return email.substring(email.indexOf('@') + 1);
   }
 
@@ -47,15 +56,16 @@ public class Email {
   }
 
   public String getUsuario() {
+    if (endereco == null) return null;
     return endereco.substring(0, endereco.indexOf('@'));
   }
 
   public boolean isGmail() {
-    return dominio.equalsIgnoreCase("gmail.com");
+    return dominio != null && dominio.equalsIgnoreCase("gmail.com");
   }
 
   public boolean isOutlook() {
-    return dominio.equalsIgnoreCase("outlook.com") || dominio.equalsIgnoreCase("hotmail.com");
+    return dominio != null && (dominio.equalsIgnoreCase("outlook.com") || dominio.equalsIgnoreCase("hotmail.com"));
   }
 
   @Override
@@ -73,6 +83,6 @@ public class Email {
 
   @Override
   public String toString() {
-    return endereco;
+    return endereco == null ? "" : endereco;
   }
 }

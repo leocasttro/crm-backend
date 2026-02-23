@@ -78,9 +78,6 @@ public class PedidoCirurgico {
     if (id == null) {
       throw new IllegalArgumentException("ID do pedido é obrigatório");
     }
-    if (pacienteId == null) {
-      throw new IllegalArgumentException("ID do paciente é obrigatório");
-    }
     if (medicoSolicitante == null) {
       throw new IllegalArgumentException("Médico solicitante é obrigatório");
     }

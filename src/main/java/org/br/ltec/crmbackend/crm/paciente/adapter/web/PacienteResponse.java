@@ -40,9 +40,22 @@ public class PacienteResponse {
     response.nomeCompleto = paciente.getNome().getNomeCompleto();
     response.primeiroNome = paciente.getNome().getPrimeiroNome();
     response.sobrenome = paciente.getNome().getSobrenome();
-    response.documento = paciente.getDocumento().getNumeroFormatado();
-    response.documentoTipo = paciente.getDocumento().getTipo().name();
-    response.email = paciente.getEmail().getEndereco();
+
+    if (paciente.getDocumento() != null) {
+      response.documento = paciente.getDocumento().getNumeroFormatado();
+      response.documentoTipo = paciente.getDocumento().getTipo().name();
+    } else {
+      response.documento = null;
+      response.documentoTipo = null;
+    }
+
+    // ✅ VERIFICAR SE EMAIL EXISTE
+    if (paciente.getEmail() != null) {
+      response.email = paciente.getEmail().getEndereco();
+    } else {
+      response.email = null;
+    }
+
     response.dataNascimento = paciente.getDataNascimento().getValor();
     response.idade = paciente.getDataNascimento().getIdade();
     response.sexo = paciente.getSexo().getDescricao();

@@ -1,5 +1,7 @@
 package org.br.ltec.crmbackend.crm.pedidos.application.useCase;
 
+import org.br.ltec.crmbackend.crm.paciente.application.useCase.CreatePacienteUseCase;  // IMPORT!
+import org.br.ltec.crmbackend.crm.paciente.domain.model.Paciente;
 import org.br.ltec.crmbackend.crm.paciente.domain.port.PacienteRepository;
 import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
 import org.br.ltec.crmbackend.crm.pedidos.application.command.CreatePedidoCommand;
@@ -10,33 +12,47 @@ import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 @Transactional
 public class CreatePedidoUseCase {
 
   private final PedidoRepository pedidoRepository;
   private final PacienteRepository pacienteRepository;
+  private final CreatePacienteUseCase createPacienteUseCase;  // ✅ ADICIONADO!
   private final PedidoBuilder pedidoBuilder;
 
+  // ✅ CONSTRUTOR ATUALIZADO
   public CreatePedidoUseCase(PedidoRepository pedidoRepository,
                              PacienteRepository pacienteRepository,
+                             CreatePacienteUseCase createPacienteUseCase,  // ✅ NOVO PARÂMETRO
                              PedidoBuilder pedidoBuilder) {
     this.pedidoRepository = pedidoRepository;
     this.pacienteRepository = pacienteRepository;
+    this.createPacienteUseCase = createPacienteUseCase;  // ✅ ATRIBUIR
     this.pedidoBuilder = pedidoBuilder;
   }
 
   public PedidoCirurgico execute(CreatePedidoCommand command) {
-    // Validar se paciente existe
-    PacienteId pacienteId = PacienteId.fromString(command.getPacienteId());
-    if (!pacienteRepository.buscarPorId(pacienteId).isPresent()) {
-      throw new IllegalArgumentException("Paciente não encontrado com ID: " + command.getPacienteId());
+
+    PacienteId pacienteId = null;
+
+    // ✅ AGORA FUNCIONA!
+    if (command.getPaciente() != null) {
+      // Cria o paciente com os dados do command
+      Paciente novoPaciente = createPacienteUseCase.execute(command.getPaciente());
+      pacienteId = novoPaciente.getId();
+      System.out.println(">>> Paciente criado com ID: " + pacienteId);
+    }
+    else if (command.getPacienteId() != null && !command.getPacienteId().isBlank()) {
+      pacienteId = PacienteId.fromString(command.getPacienteId());
+    }
+    else {
+      throw new IllegalArgumentException("É necessário informar dados do paciente");
     }
 
-    // Validar convênio
-    if (command.getConvenioValidadeCarteira().isBefore(java.time.LocalDate.now())) {
+    // Validar convênio (só se tiver validade)
+    if (command.getConvenioValidadeCarteira() != null &&
+            command.getConvenioValidadeCarteira().isBefore(java.time.LocalDate.now())) {
       throw new IllegalArgumentException("Convênio está vencido");
     }
 

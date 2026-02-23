@@ -1,13 +1,17 @@
 package org.br.ltec.crmbackend.crm.pedidos.application.useCase;
 
-import java.util.UUID;
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import org.br.ltec.crmbackend.crm.pedidos.application.command.CreatePedidoFromPdfCommand;
+import org.br.ltec.crmbackend.crm.pedidos.adapter.web.ImportPedidoPdfResponse;
+import org.br.ltec.crmbackend.crm.pedidos.application.command.CreatePedidoCommand;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoCirurgico;
 import org.br.ltec.crmbackend.crm.pedidos.domain.port.PedidoArquivoRepository;
 import org.br.ltec.crmbackend.crm.pedidos.domain.port.PedidoPdfExtractor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class CreatePedidoFromPdfUseCase {
@@ -30,28 +34,50 @@ public class CreatePedidoFromPdfUseCase {
   }
 
   @Transactional
-  public PedidoCirurgico execute(CreatePedidoFromPdfCommand command) {
-    if (command == null || command.getPdfBytes() == null || command.getPdfBytes().length == 0) {
-      throw new IllegalArgumentException("PDF é obrigatório.");
+  public ImportPedidoPdfResponse execute(MultipartFile arquivo) {
+
+    if (arquivo == null || arquivo.isEmpty()) {
+      throw new IllegalArgumentException("Arquivo PDF é obrigatório");
     }
 
-    PedidoExtraido extraido = pedidoPdfExtractor.extract(command.getPdfBytes());
-    var createPedidoCommand = pedidoExtraidoMapper.toCreatePedidoCommand(extraido, command);
+    if (!"application/pdf".equals(arquivo.getContentType())) {
+      throw new IllegalArgumentException("Arquivo deve ser PDF");
+    }
 
-    PedidoCirurgico pedido = createPedidoUseCase.execute(createPedidoCommand);
+    try {
+      byte[] pdfBytes = arquivo.getBytes();
 
-    UUID pedidoId = pedido.getId().getValue();
+      PedidoExtraido extraido = pedidoPdfExtractor.extract(pdfBytes);
 
-    pedidoArquivoRepository.salvar(
-            pedidoId,
-            new PedidoArquivoRepository.ArquivoUpload(
-                    command.getOriginalFilename(),
-                    command.getContentType(),
-                    command.getPdfBytes()
-            )
-    );
+      // Mapear para comando de criação
+      CreatePedidoCommand createPedidoCommand = pedidoExtraidoMapper.toCreatePedidoCommand(extraido);
 
-    return pedido;
+      // Criar pedido (que vai criar paciente automaticamente)
+      PedidoCirurgico pedido = createPedidoUseCase.execute(createPedidoCommand);
+
+      // ✅ CONVERTER PROCEDIMENTOS PARA O FORMATO DE RESPOSTA
+      List<ImportPedidoPdfResponse.ProcedimentoResponse> procedimentosResponse =
+              extraido.getProcedimentos().stream()
+                      .map(p -> new ImportPedidoPdfResponse.ProcedimentoResponse(
+                              p.getCodigo(),
+                              p.getDescricao(),
+                              p.getQuantidade()
+                      ))
+                      .collect(Collectors.toList());
+
+      // Montar resposta com os procedimentos
+      return ImportPedidoPdfResponse.sucesso(
+              pedido.getId().getValue().toString(),
+              pedido.getPacienteId() != null ? pedido.getPacienteId().getValue().toString() : null,
+              extraido.getNomePaciente() != null ? extraido.getNomePaciente() : null,
+              extraido.getConvenio(),
+              extraido.getCid(),
+              procedimentosResponse  // ✅ PASSAR A LISTA
+      );
+
+    } catch (IOException e) {
+      throw new RuntimeException("Erro ao processar arquivo PDF", e);
+    }
   }
 
   public static class Resultado {

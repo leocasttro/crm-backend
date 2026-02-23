@@ -38,7 +38,10 @@ public class CreatePacienteUseCase {
       // Criar Value Objects
       PacienteId id = PacienteId.generate();
       NomeCompleto nome = new NomeCompleto(command.getPrimeiroNome(), command.getSobrenome());
-      Documento documento = Documento.criar(command.getDocumentoNumero(), command.getDocumentoTipo());
+      Documento documento = null;
+      if (command.getDocumentoNumero() != null && command.getDocumentoTipo() != null) {
+        documento = Documento.criar(command.getDocumentoNumero(), command.getDocumentoTipo());
+      }
       Email email = new Email(command.getEmail());
       DataNascimento dataNascimento = new DataNascimento(command.getDataNascimento());
       Sexo sexo = new Sexo(command.getSexo());

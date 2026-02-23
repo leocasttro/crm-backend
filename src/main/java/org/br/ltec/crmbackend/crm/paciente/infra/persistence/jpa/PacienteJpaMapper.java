@@ -1,5 +1,6 @@
 package org.br.ltec.crmbackend.crm.paciente.infra.persistence.jpa;
 
+import org.br.ltec.crmbackend.crm.paciente.domain.DomainException;
 import org.br.ltec.crmbackend.crm.paciente.domain.model.Paciente;
 import org.br.ltec.crmbackend.crm.paciente.domain.model.PacienteBuilder;
 import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.*;
@@ -29,8 +30,13 @@ public class PacienteJpaMapper {
     entity.setNomeCompleto(paciente.getNome().getNomeCompleto());
 
     // Documento
-    entity.setDocumentoNumero(paciente.getDocumento().getNumero());
-    entity.setDocumentoTipo(paciente.getDocumento().getTipo().name());
+    if (paciente.getDocumento() != null) {
+      entity.setDocumentoNumero(paciente.getDocumento().getNumero());
+      entity.setDocumentoTipo(paciente.getDocumento().getTipo().name());
+    } else {
+      entity.setDocumentoNumero(null);
+      entity.setDocumentoTipo(null);
+    }
 
     // Email
     entity.setEmail(paciente.getEmail().getEndereco());
@@ -90,18 +96,52 @@ public class PacienteJpaMapper {
 
     try {
       PacienteId id = PacienteId.fromString(entity.getId().toString());
-      NomeCompleto nome = new NomeCompleto(entity.getPrimeiroNome(), entity.getSobrenome());
 
-      Documento documento = Documento.criar(
-              entity.getDocumentoNumero(),
-              Documento.TipoDocumento.valueOf(entity.getDocumentoTipo())
-      );
+      // ✅ VERIFICAR SE TEM PRIMEIRO NOME ANTES DE CRIAR
+      NomeCompleto nome;
+      if (entity.getPrimeiroNome() != null && !entity.getPrimeiroNome().isEmpty()) {
+        nome = new NomeCompleto(
+                entity.getPrimeiroNome(),
+                entity.getSobrenome() != null ? entity.getSobrenome() : ""
+        );
+      } else if (entity.getNomeCompleto() != null && !entity.getNomeCompleto().isEmpty()) {
+        // Fallback: usar nome completo se primeiroNome não existir
+        String[] partes = entity.getNomeCompleto().split(" ", 2);
+        String primeiroNome = partes[0];
+        String sobrenome = partes.length > 1 ? partes[1] : "";
+        nome = new NomeCompleto(primeiroNome, sobrenome);
+      } else {
+        throw new DomainException("Nome do paciente é obrigatório");
+      }
 
-      Email email = new Email(entity.getEmail());
-      DataNascimento dataNascimento = new DataNascimento(entity.getDataNascimento());
-      Sexo sexo = new Sexo(entity.getSexoCodigo());
+      // Documento (opcional)
+      Documento documento = null;
+      if (entity.getDocumentoNumero() != null && entity.getDocumentoTipo() != null) {
+        documento = Documento.criar(
+                entity.getDocumentoNumero(),
+                Documento.TipoDocumento.valueOf(entity.getDocumentoTipo())
+        );
+      }
 
-      // Endereço
+      // Email (opcional)
+      Email email = null;
+      if (entity.getEmail() != null && !entity.getEmail().isEmpty()) {
+        email = new Email(entity.getEmail());
+      }
+
+      // Data nascimento (obrigatória)
+      DataNascimento dataNascimento = null;
+      if (entity.getDataNascimento() != null) {
+        dataNascimento = new DataNascimento(entity.getDataNascimento());
+      }
+
+      // Sexo (opcional)
+      Sexo sexo = null;
+      if (entity.getSexoCodigo() != null) {
+        sexo = new Sexo(entity.getSexoCodigo());
+      }
+
+      // Endereço (opcional)
       Endereco endereco = null;
       if (entity.getLogradouro() != null && !entity.getLogradouro().trim().isEmpty()) {
         endereco = new Endereco(
@@ -116,7 +156,7 @@ public class PacienteJpaMapper {
         );
       }
 
-      // Telefones
+      // Telefones (opcional)
       List<Telefone> telefones = new ArrayList<>();
       if (entity.getTelefones() != null && !entity.getTelefones().trim().isEmpty()) {
         String[] telefoneEntries = entity.getTelefones().split("\\|");

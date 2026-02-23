@@ -38,10 +38,6 @@ public class PedidoController {
 
   @PostMapping
   public ResponseEntity<PedidoResponse> criar(@Valid @RequestBody CreatePedidoRequest req) {
-
-    // ✅ Resolver pacienteId:
-    // - se veio pacienteId -> usa
-    // - se não veio -> cria paciente com req.getPaciente() e usa o id gerado
     String pacienteId = req.getPacienteId();
 
     if (pacienteId == null || pacienteId.isBlank()) {
@@ -55,62 +51,49 @@ public class PedidoController {
       pacienteId = pacienteCriado.getId().getValue().toString();
     }
 
-    // Converter string para enum de Prioridade
     Prioridade.Tipo tipoPrioridade = Prioridade.Tipo.fromString(req.getPrioridade());
 
-    // Criar command usando setters
     CreatePedidoCommand command = new CreatePedidoCommand();
 
-    // Configurar campos básicos
     command.setPacienteId(pacienteId);
     command.setUsuarioCriacao("usuario_atual");
     command.setDataPedido(req.getDataPedido() != null ? req.getDataPedido() : LocalDate.now());
 
-    // Configurar médico solicitante
     command.setMedicoSolicitanteNome(req.getMedicoSolicitanteNome());
     command.setMedicoSolicitanteCrm(req.getMedicoSolicitanteCrm());
     command.setMedicoSolicitanteEspecialidade(req.getMedicoSolicitanteEspecialidade());
 
-    // Configurar procedimento
     command.setProcedimentoCodigoTUSS(req.getProcedimentoCodigo());
     command.setProcedimentoDescricao(req.getProcedimentoNome());
     command.setProcedimentoCategoria(req.getProcedimentoCategoria());
 
-    // Configurar convênio
     command.setConvenioNome(req.getConvenioNome());
     command.setConvenioNumeroCarteira(req.getConvenioNumeroCarteira());
     command.setConvenioValidadeCarteira(req.getConvenioValidadeCarteira());
     command.setConvenioTipoPlano(req.getConvenioTipoPlano());
 
-    // Configurar CID
     command.setCidCodigo(req.getCidCodigo());
     command.setCidDescricao(req.getCidDescricao());
 
-    // Configurar prioridade
     command.setPrioridade(new Prioridade(tipoPrioridade, req.getPrioridadeJustificativa()));
 
-    // Configurar lateralidade
     if (req.getLateralidade() != null) {
       command.setLateralidade(new Lateralidade(req.getLateralidade()));
     }
 
-    // Configurar status inicial
     command.setStatus(StatusPedido.Tipo.RASCUNHO);
 
-    // Configurar observação inicial
     List<String> observacoes = new ArrayList<>();
     if (req.getObservacaoInicial() != null && !req.getObservacaoInicial().trim().isEmpty()) {
       observacoes.add(req.getObservacaoInicial());
     }
     command.setObservacoes(observacoes);
 
-    // Configurar agendamento pretendido (se fornecido)
     if (req.getDataAgendamentoPretendida() != null) {
       command.setAgendamentoDataHora(req.getDataAgendamentoPretendida());
       command.setAgendamentoObservacoes("Agendamento pretendido informado na criação");
     }
 
-    // Lista vazia de documentos inicialmente
     command.setDocumentosAnexados(new ArrayList<>());
 
     PedidoCirurgico pedido = createUseCase.execute(command);
@@ -151,19 +134,10 @@ public class PedidoController {
   }
 
   @PostMapping(value = "/importar-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<PedidoResponse> importarPdf(
-          @RequestPart("pdf") MultipartFile pdf,
-          @RequestParam("pacienteId") String pacienteId
-  ) throws IOException {
+  public ResponseEntity<ImportPedidoPdfResponse> importarPdf(@RequestPart("pdf") MultipartFile pdf) throws IOException {
 
-    CreatePedidoFromPdfCommand cmd = new CreatePedidoFromPdfCommand();
-    cmd.setPdfBytes(pdf.getBytes());
-    cmd.setOriginalFilename(pdf.getOriginalFilename());
-    cmd.setContentType(pdf.getContentType());
-    cmd.setPacienteId(pacienteId);
-
-    PedidoCirurgico pedido = createFromPdfUseCase.execute(cmd);
-    return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(pedido));
+    ImportPedidoPdfResponse response = createFromPdfUseCase.execute(pdf);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   private PedidoResponse toResponse(PedidoCirurgico p) {
@@ -175,7 +149,7 @@ public class PedidoController {
             .procedimento(p.getProcedimento().getDescricao())
             .procedimentoCodigo(p.getProcedimento().getCodigoTUSS())
             .convenio(p.getConvenio().getNome())
-            .convenioValidadeCarteira(p.getConvenio().getValidadeCarteira())
+            .convenioValidadeCarteira(p.getConvenio().getValidade())
             .cid(p.getCid() != null ? p.getCid().getCodigo() : null)
             .cidDescricao(p.getCid() != null ? p.getCid().getDescricao() : null)
             .prioridade(p.getPrioridade().getTipo().name())
