@@ -74,6 +74,19 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
       extraido.setCbo(safe(mMedCompleto.group(5)));
     }
 
+    // ==================== TELEFONE ====================
+    Matcher mTel = PedidoPdfPatterns.TELEFONE.matcher(text);
+    if (mTel.find()) {
+      String telefone = "(" + mTel.group(1) + ") " + mTel.group(2) + "-" + mTel.group(3);
+      extraido.setTelefone(telefone);
+    }
+
+    // ==================== ENDEREÇO ====================
+    Matcher mEnd = PedidoPdfPatterns.ENDERECO.matcher(text);
+    if (mEnd.find()) {
+      extraido.setEnderecoMedico(safe(mEnd.group(1)));
+    }
+
     // ==================== PROCEDIMENTOS (OPME - formato simples) ====================
     List<PedidoExtraido.ProcedimentoExtraido> procedimentos = new ArrayList<>();
     Matcher mProcOPME = PedidoPdfPatterns.PROCEDIMENTO_OPME.matcher(text);
@@ -132,22 +145,20 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
       extraido.setIndicacaoClinica(safe(mIndicacao.group(1).replaceAll("\\s+", " ")));
     }
 
+    // 🔥 NOVO: RELATÓRIO PRÉ-OPERATÓRIO
+    Matcher mRelatorio = PedidoPdfPatterns.RELATORIO_PRE_OPERATORIO.matcher(text);
+    if (mRelatorio.find()) {
+      extraido.setRelatorioPreOperatorio(safe(mRelatorio.group(1).replaceAll("\\s+", " ")));
+    }
+
+    // 🔥 NOVO: ORIENTAÇÕES
+    Matcher mOrientacoes = PedidoPdfPatterns.ORIENTACOES.matcher(text);
+    if (mOrientacoes.find()) {
+      extraido.setOrientacoes(safe(mOrientacoes.group(1).replaceAll("\\s+", " ")));
+    }
+
     // ==================== DATA DA SOLICITAÇÃO ====================
     extraido.setDataSolicitacao(firstGroup(text, PedidoPdfPatterns.DATA_SOLICITACAO).orElse(null));
-
-    // ==================== TELEFONE ====================
-    Matcher mTel = PedidoPdfPatterns.TELEFONE.matcher(text);
-    if (mTel.find()) {
-      String telefone = "(" + mTel.group(1) + ") " + mTel.group(2) + "-" + mTel.group(3);
-      extraido.setTelefone(telefone);
-    }
-
-    // ==================== ENDEREÇO ====================
-    Matcher mEnd = PedidoPdfPatterns.ENDERECO.matcher(text);
-    if (mEnd.find()) {
-      extraido.setEnderecoMedico(safe(mEnd.group(1)));
-      // O CEP está no grupo 2, se quiser extrair separadamente
-    }
 
     // ==================== TEXTO NORMALIZADO (para debug) ====================
     extraido.setTextoNormalizado(text);

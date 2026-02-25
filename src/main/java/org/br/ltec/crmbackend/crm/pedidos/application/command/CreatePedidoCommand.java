@@ -11,9 +11,7 @@ import java.util.List;
 
 public class CreatePedidoCommand {
   private CreatePacienteCommand paciente;
-  // Campo existente - para usar paciente existente
   private String pacienteId;
-
   private String usuarioCriacao;
 
   // Médico Solicitante
@@ -31,6 +29,11 @@ public class CreatePedidoCommand {
   private String procedimentoDescricao;
   private String procedimentoCategoria;
 
+  // 🔥 NOVOS CAMPOS CLÍNICOS
+  private String indicacaoClinica;
+  private String relatorioPreOperatorio;
+  private String orientacoes;
+
   // Convênio
   private String convenioNome;
   private String convenioNumeroCarteira;
@@ -40,6 +43,29 @@ public class CreatePedidoCommand {
   // CID (opcional)
   private String cidCodigo;
   private String cidDescricao;
+
+  // 🔥 CIDs Secundários
+  private String cidCodigo2;
+  private String cidCodigo3;
+  private String cidCodigo4;
+
+  // 🔥 Dados da Guia/Internação
+  private String numeroGuia;
+  private String registroAns;
+  private String numeroGuiaOperadora;
+  private String codigoOperadora;
+  private String nomeContratado;
+  private String caraterAtendimento;
+  private String tipoInternacao;
+  private String regimeInternacao;
+  private String qtdDiariasSolicitadas;
+
+  // 🔥 Dados de Contato do Paciente
+  private String telefonePaciente;
+  private String enderecoPaciente;
+  private String cpfPaciente;
+  private String emailPaciente;
+  private String sexoPaciente;
 
   // Agendamento (opcional)
   private LocalDateTime agendamentoDataHora;
@@ -55,240 +81,169 @@ public class CreatePedidoCommand {
   // Data do pedido
   private LocalDate dataPedido;
 
-  // Observações
+  // Observações e documentos
   private List<String> observacoes;
-
-  // Documentos anexados (URLs ou caminhos)
   private List<String> documentosAnexados;
 
-  // Construtores
+  // Construtor
   public CreatePedidoCommand() {
     this.status = StatusPedido.Tipo.PENDENTE;
     this.dataPedido = LocalDate.now();
   }
 
-  // Getters e Setters
-  public String getPacienteId() {
-    return pacienteId;
-  }
+  // ==================== GETTERS E SETTERS ====================
 
-  public void setPacienteId(String pacienteId) {
-    this.pacienteId = pacienteId;
-  }
+  // Campos existentes
+  public String getPacienteId() { return pacienteId; }
+  public void setPacienteId(String pacienteId) { this.pacienteId = pacienteId; }
 
-  public String getUsuarioCriacao() {
-    return usuarioCriacao;
-  }
+  public String getUsuarioCriacao() { return usuarioCriacao; }
+  public void setUsuarioCriacao(String usuarioCriacao) { this.usuarioCriacao = usuarioCriacao; }
 
-  public void setUsuarioCriacao(String usuarioCriacao) {
-    this.usuarioCriacao = usuarioCriacao;
-  }
+  public String getMedicoSolicitanteNome() { return medicoSolicitanteNome; }
+  public void setMedicoSolicitanteNome(String medicoSolicitanteNome) { this.medicoSolicitanteNome = medicoSolicitanteNome; }
 
-  public String getMedicoSolicitanteNome() {
-    return medicoSolicitanteNome;
-  }
+  public String getMedicoSolicitanteCrm() { return medicoSolicitanteCrm; }
+  public void setMedicoSolicitanteCrm(String medicoSolicitanteCrm) { this.medicoSolicitanteCrm = medicoSolicitanteCrm; }
 
-  public void setMedicoSolicitanteNome(String medicoSolicitanteNome) {
-    this.medicoSolicitanteNome = medicoSolicitanteNome;
-  }
+  public String getMedicoSolicitanteEspecialidade() { return medicoSolicitanteEspecialidade; }
+  public void setMedicoSolicitanteEspecialidade(String medicoSolicitanteEspecialidade) { this.medicoSolicitanteEspecialidade = medicoSolicitanteEspecialidade; }
 
-  public String getMedicoSolicitanteCrm() {
-    return medicoSolicitanteCrm;
-  }
+  public String getMedicoExecutorNome() { return medicoExecutorNome; }
+  public void setMedicoExecutorNome(String medicoExecutorNome) { this.medicoExecutorNome = medicoExecutorNome; }
 
-  public void setMedicoSolicitanteCrm(String medicoSolicitanteCrm) {
-    this.medicoSolicitanteCrm = medicoSolicitanteCrm;
-  }
+  public String getMedicoExecutorCrm() { return medicoExecutorCrm; }
+  public void setMedicoExecutorCrm(String medicoExecutorCrm) { this.medicoExecutorCrm = medicoExecutorCrm; }
 
-  public String getMedicoSolicitanteEspecialidade() {
-    return medicoSolicitanteEspecialidade;
-  }
+  public String getMedicoExecutorEspecialidade() { return medicoExecutorEspecialidade; }
+  public void setMedicoExecutorEspecialidade(String medicoExecutorEspecialidade) { this.medicoExecutorEspecialidade = medicoExecutorEspecialidade; }
 
-  public void setMedicoSolicitanteEspecialidade(String medicoSolicitanteEspecialidade) {
-    this.medicoSolicitanteEspecialidade = medicoSolicitanteEspecialidade;
-  }
+  public String getProcedimentoCodigoTUSS() { return procedimentoCodigoTUSS; }
+  public void setProcedimentoCodigoTUSS(String procedimentoCodigoTUSS) { this.procedimentoCodigoTUSS = procedimentoCodigoTUSS; }
 
-  public String getMedicoExecutorNome() {
-    return medicoExecutorNome;
-  }
+  public String getProcedimentoDescricao() { return procedimentoDescricao; }
+  public void setProcedimentoDescricao(String procedimentoDescricao) { this.procedimentoDescricao = procedimentoDescricao; }
 
-  public void setMedicoExecutorNome(String medicoExecutorNome) {
-    this.medicoExecutorNome = medicoExecutorNome;
-  }
+  public String getProcedimentoCategoria() { return procedimentoCategoria; }
+  public void setProcedimentoCategoria(String procedimentoCategoria) { this.procedimentoCategoria = procedimentoCategoria; }
 
-  public String getMedicoExecutorCrm() {
-    return medicoExecutorCrm;
-  }
+  // 🔥 NOVOS GETTERS/SETTERS CLÍNICOS
+  public String getIndicacaoClinica() { return indicacaoClinica; }
+  public void setIndicacaoClinica(String indicacaoClinica) { this.indicacaoClinica = indicacaoClinica; }
 
-  public void setMedicoExecutorCrm(String medicoExecutorCrm) {
-    this.medicoExecutorCrm = medicoExecutorCrm;
-  }
+  public String getRelatorioPreOperatorio() { return relatorioPreOperatorio; }
+  public void setRelatorioPreOperatorio(String relatorioPreOperatorio) { this.relatorioPreOperatorio = relatorioPreOperatorio; }
 
-  public String getMedicoExecutorEspecialidade() {
-    return medicoExecutorEspecialidade;
-  }
+  public String getOrientacoes() { return orientacoes; }
+  public void setOrientacoes(String orientacoes) { this.orientacoes = orientacoes; }
 
-  public void setMedicoExecutorEspecialidade(String medicoExecutorEspecialidade) {
-    this.medicoExecutorEspecialidade = medicoExecutorEspecialidade;
-  }
+  // Convênio
+  public String getConvenioNome() { return convenioNome; }
+  public void setConvenioNome(String convenioNome) { this.convenioNome = convenioNome; }
 
-  public String getProcedimentoCodigoTUSS() {
-    return procedimentoCodigoTUSS;
-  }
+  public String getConvenioNumeroCarteira() { return convenioNumeroCarteira; }
+  public void setConvenioNumeroCarteira(String convenioNumeroCarteira) { this.convenioNumeroCarteira = convenioNumeroCarteira; }
 
-  public void setProcedimentoCodigoTUSS(String procedimentoCodigoTUSS) {
-    this.procedimentoCodigoTUSS = procedimentoCodigoTUSS;
-  }
+  public LocalDate getConvenioValidadeCarteira() { return convenioValidadeCarteira; }
+  public void setConvenioValidadeCarteira(LocalDate convenioValidadeCarteira) { this.convenioValidadeCarteira = convenioValidadeCarteira; }
 
-  public String getProcedimentoDescricao() {
-    return procedimentoDescricao;
-  }
+  public String getConvenioTipoPlano() { return convenioTipoPlano; }
+  public void setConvenioTipoPlano(String convenioTipoPlano) { this.convenioTipoPlano = convenioTipoPlano; }
 
-  public void setProcedimentoDescricao(String procedimentoDescricao) {
-    this.procedimentoDescricao = procedimentoDescricao;
-  }
+  // CID
+  public String getCidCodigo() { return cidCodigo; }
+  public void setCidCodigo(String cidCodigo) { this.cidCodigo = cidCodigo; }
 
-  public String getProcedimentoCategoria() {
-    return procedimentoCategoria;
-  }
+  public String getCidDescricao() { return cidDescricao; }
+  public void setCidDescricao(String cidDescricao) { this.cidDescricao = cidDescricao; }
 
-  public void setProcedimentoCategoria(String procedimentoCategoria) {
-    this.procedimentoCategoria = procedimentoCategoria;
-  }
+  // 🔥 CIDs Secundários
+  public String getCidCodigo2() { return cidCodigo2; }
+  public void setCidCodigo2(String cidCodigo2) { this.cidCodigo2 = cidCodigo2; }
 
-  public String getConvenioNome() {
-    return convenioNome;
-  }
+  public String getCidCodigo3() { return cidCodigo3; }
+  public void setCidCodigo3(String cidCodigo3) { this.cidCodigo3 = cidCodigo3; }
 
-  public void setConvenioNome(String convenioNome) {
-    this.convenioNome = convenioNome;
-  }
+  public String getCidCodigo4() { return cidCodigo4; }
+  public void setCidCodigo4(String cidCodigo4) { this.cidCodigo4 = cidCodigo4; }
 
-  public String getConvenioNumeroCarteira() {
-    return convenioNumeroCarteira;
-  }
+  // 🔥 Dados da Guia
+  public String getNumeroGuia() { return numeroGuia; }
+  public void setNumeroGuia(String numeroGuia) { this.numeroGuia = numeroGuia; }
 
-  public void setConvenioNumeroCarteira(String convenioNumeroCarteira) {
-    this.convenioNumeroCarteira = convenioNumeroCarteira;
-  }
+  public String getRegistroAns() { return registroAns; }
+  public void setRegistroAns(String registroAns) { this.registroAns = registroAns; }
 
-  public LocalDate getConvenioValidadeCarteira() {
-    return convenioValidadeCarteira;
-  }
+  public String getNumeroGuiaOperadora() { return numeroGuiaOperadora; }
+  public void setNumeroGuiaOperadora(String numeroGuiaOperadora) { this.numeroGuiaOperadora = numeroGuiaOperadora; }
 
-  public void setConvenioValidadeCarteira(LocalDate convenioValidadeCarteira) {
-    this.convenioValidadeCarteira = convenioValidadeCarteira;
-  }
+  public String getCodigoOperadora() { return codigoOperadora; }
+  public void setCodigoOperadora(String codigoOperadora) { this.codigoOperadora = codigoOperadora; }
 
-  public String getConvenioTipoPlano() {
-    return convenioTipoPlano;
-  }
+  public String getNomeContratado() { return nomeContratado; }
+  public void setNomeContratado(String nomeContratado) { this.nomeContratado = nomeContratado; }
 
-  public void setConvenioTipoPlano(String convenioTipoPlano) {
-    this.convenioTipoPlano = convenioTipoPlano;
-  }
+  // 🔥 Dados da Internação
+  public String getCaraterAtendimento() { return caraterAtendimento; }
+  public void setCaraterAtendimento(String caraterAtendimento) { this.caraterAtendimento = caraterAtendimento; }
 
-  public String getCidCodigo() {
-    return cidCodigo;
-  }
+  public String getTipoInternacao() { return tipoInternacao; }
+  public void setTipoInternacao(String tipoInternacao) { this.tipoInternacao = tipoInternacao; }
 
-  public void setCidCodigo(String cidCodigo) {
-    this.cidCodigo = cidCodigo;
-  }
+  public String getRegimeInternacao() { return regimeInternacao; }
+  public void setRegimeInternacao(String regimeInternacao) { this.regimeInternacao = regimeInternacao; }
 
-  public String getCidDescricao() {
-    return cidDescricao;
-  }
+  public String getQtdDiariasSolicitadas() { return qtdDiariasSolicitadas; }
+  public void setQtdDiariasSolicitadas(String qtdDiariasSolicitadas) { this.qtdDiariasSolicitadas = qtdDiariasSolicitadas; }
 
-  public void setCidDescricao(String cidDescricao) {
-    this.cidDescricao = cidDescricao;
-  }
+  // 🔥 Dados de Contato do Paciente
+  public String getTelefonePaciente() { return telefonePaciente; }
+  public void setTelefonePaciente(String telefonePaciente) { this.telefonePaciente = telefonePaciente; }
 
-  public LocalDateTime getAgendamentoDataHora() {
-    return agendamentoDataHora;
-  }
+  public String getEnderecoPaciente() { return enderecoPaciente; }
+  public void setEnderecoPaciente(String enderecoPaciente) { this.enderecoPaciente = enderecoPaciente; }
 
-  public void setAgendamentoDataHora(LocalDateTime agendamentoDataHora) {
-    this.agendamentoDataHora = agendamentoDataHora;
-  }
+  public String getCpfPaciente() { return cpfPaciente; }
+  public void setCpfPaciente(String cpfPaciente) { this.cpfPaciente = cpfPaciente; }
 
-  public String getAgendamentoSala() {
-    return agendamentoSala;
-  }
+  public String getEmailPaciente() { return emailPaciente; }
+  public void setEmailPaciente(String emailPaciente) { this.emailPaciente = emailPaciente; }
 
-  public void setAgendamentoSala(String agendamentoSala) {
-    this.agendamentoSala = agendamentoSala;
-  }
+  public String getSexoPaciente() { return sexoPaciente; }
+  public void setSexoPaciente(String sexoPaciente) { this.sexoPaciente = sexoPaciente; }
 
-  public Integer getAgendamentoDuracaoEstimada() {
-    return agendamentoDuracaoEstimada;
-  }
+  // Agendamento
+  public LocalDateTime getAgendamentoDataHora() { return agendamentoDataHora; }
+  public void setAgendamentoDataHora(LocalDateTime agendamentoDataHora) { this.agendamentoDataHora = agendamentoDataHora; }
 
-  public void setAgendamentoDuracaoEstimada(Integer agendamentoDuracaoEstimada) {
-    this.agendamentoDuracaoEstimada = agendamentoDuracaoEstimada;
-  }
+  public String getAgendamentoSala() { return agendamentoSala; }
+  public void setAgendamentoSala(String agendamentoSala) { this.agendamentoSala = agendamentoSala; }
 
-  public String getAgendamentoObservacoes() {
-    return agendamentoObservacoes;
-  }
+  public Integer getAgendamentoDuracaoEstimada() { return agendamentoDuracaoEstimada; }
+  public void setAgendamentoDuracaoEstimada(Integer agendamentoDuracaoEstimada) { this.agendamentoDuracaoEstimada = agendamentoDuracaoEstimada; }
 
-  public void setAgendamentoObservacoes(String agendamentoObservacoes) {
-    this.agendamentoObservacoes = agendamentoObservacoes;
-  }
+  public String getAgendamentoObservacoes() { return agendamentoObservacoes; }
+  public void setAgendamentoObservacoes(String agendamentoObservacoes) { this.agendamentoObservacoes = agendamentoObservacoes; }
 
-  public StatusPedido.Tipo getStatus() {
-    return status;
-  }
+  // Status e prioridade
+  public StatusPedido.Tipo getStatus() { return status; }
+  public void setStatus(StatusPedido.Tipo status) { this.status = status; }
 
-  public void setStatus(StatusPedido.Tipo status) {
-    this.status = status;
-  }
+  public Prioridade getPrioridade() { return prioridade; }
+  public void setPrioridade(Prioridade prioridade) { this.prioridade = prioridade; }
 
-  public Prioridade getPrioridade() {
-    return prioridade;
-  }
+  public Lateralidade getLateralidade() { return lateralidade; }
+  public void setLateralidade(Lateralidade lateralidade) { this.lateralidade = lateralidade; }
 
-  public void setPrioridade(Prioridade prioridade) {
-    this.prioridade = prioridade;
-  }
+  public LocalDate getDataPedido() { return dataPedido; }
+  public void setDataPedido(LocalDate dataPedido) { this.dataPedido = dataPedido; }
 
-  public Lateralidade getLateralidade() {
-    return lateralidade;
-  }
+  public List<String> getObservacoes() { return observacoes; }
+  public void setObservacoes(List<String> observacoes) { this.observacoes = observacoes; }
 
-  public void setLateralidade(Lateralidade lateralidade) {
-    this.lateralidade = lateralidade;
-  }
+  public List<String> getDocumentosAnexados() { return documentosAnexados; }
+  public void setDocumentosAnexados(List<String> documentosAnexados) { this.documentosAnexados = documentosAnexados; }
 
-  public LocalDate getDataPedido() {
-    return dataPedido;
-  }
-
-  public void setDataPedido(LocalDate dataPedido) {
-    this.dataPedido = dataPedido;
-  }
-
-  public List<String> getObservacoes() {
-    return observacoes;
-  }
-
-  public void setObservacoes(List<String> observacoes) {
-    this.observacoes = observacoes;
-  }
-
-  public List<String> getDocumentosAnexados() {
-    return documentosAnexados;
-  }
-
-  public void setDocumentosAnexados(List<String> documentosAnexados) {
-    this.documentosAnexados = documentosAnexados;
-  }
-
-  public CreatePacienteCommand getPaciente() {
-    return paciente;
-  }
-
-  public void setPaciente(CreatePacienteCommand paciente) {
-    this.paciente = paciente;
-  }
+  public CreatePacienteCommand getPaciente() { return paciente; }
+  public void setPaciente(CreatePacienteCommand paciente) { this.paciente = paciente; }
 }

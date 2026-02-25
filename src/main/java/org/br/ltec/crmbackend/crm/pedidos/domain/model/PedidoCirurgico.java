@@ -31,24 +31,126 @@ public class PedidoCirurgico {
   private String usuarioAtualizacao;
   private LocalDate dataPedido;
 
-  // Construtor simplificado
+  // 🔥 NOVOS CAMPOS EXTRAÍDOS DO PDF
+  private String indicacaoClinica;
+  private String relatorioPreOperatorio;
+  private String orientacoes;
+  private String telefonePaciente;
+  private String enderecoPaciente;
+
+  // CIDs secundários
+  private String cidCodigo2;
+  private String cidCodigo3;
+  private String cidCodigo4;
+
+  // Dados da guia/internação
+  private String numeroGuia;
+  private String registroAns;
+  private String numeroGuiaOperadora;
+  private String codigoOperadora;
+  private String nomeContratado;
+  private String caraterAtendimento;
+  private String tipoInternacao;
+  private String regimeInternacao;
+  private String qtdDiariasSolicitadas;
+
+  // Dados adicionais do paciente
+  private String cpfPaciente;
+  private String emailPaciente;
+  private String sexoPaciente;
+
+  // 🔥 Construtor simplificado (CORRIGIDO)
   public PedidoCirurgico(PedidoId id, PacienteId pacienteId, Medico medicoSolicitante,
                          Procedimento procedimento, Convenio convenio,
                          Prioridade prioridade, String usuarioCriacao) {
-    this(id, pacienteId, medicoSolicitante, null, procedimento, convenio, null,
-            null, new StatusPedido(StatusPedido.Tipo.RASCUNHO), prioridade,
-            new Lateralidade(Lateralidade.Tipo.NAO_APLICAVEL), new ArrayList<>(),
-            new ArrayList<>(), LocalDateTime.now(), null, usuarioCriacao, null, LocalDate.now());
+
+    // Inicializa campos obrigatórios
+    this.id = id;
+    this.pacienteId = pacienteId;
+    this.medicoSolicitante = medicoSolicitante;
+    this.procedimento = procedimento;
+    this.convenio = convenio;
+    this.prioridade = prioridade;
+    this.usuarioCriacao = usuarioCriacao;
+
+    // Inicializa campos com valores padrão
+    this.medicoExecutor = null;
+    this.cid = null;
+    this.agendamento = null;
+    this.status = new StatusPedido(StatusPedido.Tipo.RASCUNHO);
+    this.lateralidade = new Lateralidade(Lateralidade.Tipo.NAO_APLICAVEL);
+    this.observacoes = new ArrayList<>();
+    this.documentosAnexados = new ArrayList<>();
+    this.criadoEm = LocalDateTime.now();
+    this.atualizadoEm = null;
+    this.usuarioAtualizacao = null;
+    this.dataPedido = LocalDate.now();
+
+    // 🔥 Inicializa novos campos com null
+    this.indicacaoClinica = null;
+    this.relatorioPreOperatorio = null;
+    this.orientacoes = null;
+    this.telefonePaciente = null;
+    this.enderecoPaciente = null;
+    this.cidCodigo2 = null;
+    this.cidCodigo3 = null;
+    this.cidCodigo4 = null;
+    this.numeroGuia = null;
+    this.registroAns = null;
+    this.numeroGuiaOperadora = null;
+    this.codigoOperadora = null;
+    this.nomeContratado = null;
+    this.caraterAtendimento = null;
+    this.tipoInternacao = null;
+    this.regimeInternacao = null;
+    this.qtdDiariasSolicitadas = null;
+    this.cpfPaciente = null;
+    this.emailPaciente = null;
+    this.sexoPaciente = null;
   }
 
-  // Construtor completo
-  public PedidoCirurgico(PedidoId id, PacienteId pacienteId, Medico medicoSolicitante,
-                         Medico medicoExecutor, Procedimento procedimento,
-                         Convenio convenio, CID cid, DataHoraAgendamento agendamento,
-                         StatusPedido status, Prioridade prioridade, Lateralidade lateralidade,
-                         List<String> observacoes, List<String> documentosAnexados,
-                         LocalDateTime criadoEm, LocalDateTime atualizadoEm, String usuarioCriacao,
-                         String usuarioAtualizacao, LocalDate dataPedido) {
+  // Construtor completo ATUALIZADO com todos os novos campos
+  public PedidoCirurgico(
+          PedidoId id,
+          PacienteId pacienteId,
+          Medico medicoSolicitante,
+          Medico medicoExecutor,
+          Procedimento procedimento,
+          Convenio convenio,
+          CID cid,
+          DataHoraAgendamento agendamento,
+          StatusPedido status,
+          Prioridade prioridade,
+          Lateralidade lateralidade,
+          List<String> observacoes,
+          List<String> documentosAnexados,
+          LocalDateTime criadoEm,
+          LocalDateTime atualizadoEm,
+          String usuarioCriacao,
+          String usuarioAtualizacao,
+          LocalDate dataPedido,
+
+          // 🔥 NOVOS CAMPOS
+          String indicacaoClinica,
+          String relatorioPreOperatorio,
+          String orientacoes,
+          String telefonePaciente,
+          String enderecoPaciente,
+          String cidCodigo2,
+          String cidCodigo3,
+          String cidCodigo4,
+          String numeroGuia,
+          String registroAns,
+          String numeroGuiaOperadora,
+          String codigoOperadora,
+          String nomeContratado,
+          String caraterAtendimento,
+          String tipoInternacao,
+          String regimeInternacao,
+          String qtdDiariasSolicitadas,
+          String cpfPaciente,
+          String emailPaciente,
+          String sexoPaciente) {
 
     validarCriacao(id, pacienteId, medicoSolicitante, procedimento, convenio, status);
 
@@ -70,6 +172,28 @@ public class PedidoCirurgico {
     this.usuarioCriacao = usuarioCriacao;
     this.usuarioAtualizacao = usuarioAtualizacao;
     this.dataPedido = dataPedido != null ? dataPedido : LocalDate.now();
+
+    // 🔥 NOVOS CAMPOS
+    this.indicacaoClinica = indicacaoClinica;
+    this.relatorioPreOperatorio = relatorioPreOperatorio;
+    this.orientacoes = orientacoes;
+    this.telefonePaciente = telefonePaciente;
+    this.enderecoPaciente = enderecoPaciente;
+    this.cidCodigo2 = cidCodigo2;
+    this.cidCodigo3 = cidCodigo3;
+    this.cidCodigo4 = cidCodigo4;
+    this.numeroGuia = numeroGuia;
+    this.registroAns = registroAns;
+    this.numeroGuiaOperadora = numeroGuiaOperadora;
+    this.codigoOperadora = codigoOperadora;
+    this.nomeContratado = nomeContratado;
+    this.caraterAtendimento = caraterAtendimento;
+    this.tipoInternacao = tipoInternacao;
+    this.regimeInternacao = regimeInternacao;
+    this.qtdDiariasSolicitadas = qtdDiariasSolicitadas;
+    this.cpfPaciente = cpfPaciente;
+    this.emailPaciente = emailPaciente;
+    this.sexoPaciente = sexoPaciente;
   }
 
   private void validarCriacao(PedidoId id, PacienteId pacienteId, Medico medicoSolicitante,
@@ -77,6 +201,9 @@ public class PedidoCirurgico {
                               StatusPedido status) {
     if (id == null) {
       throw new IllegalArgumentException("ID do pedido é obrigatório");
+    }
+    if (pacienteId == null) {
+      throw new IllegalArgumentException("ID do paciente é obrigatório");
     }
     if (medicoSolicitante == null) {
       throw new IllegalArgumentException("Médico solicitante é obrigatório");
@@ -92,7 +219,8 @@ public class PedidoCirurgico {
     }
   }
 
-  // Métodos de negócio (usando getTipo())
+  // ==================== MÉTODOS DE NEGÓCIO (existentes) ====================
+
   public void enviarParaAnalise(String usuario) {
     if (!status.getTipo().podeSerAtualizadoPara(StatusPedido.Tipo.PENDENTE)) {
       throw new IllegalStateException("Não é possível enviar para análise este pedido no status atual: " + status.getTipo());
@@ -166,7 +294,8 @@ public class PedidoCirurgico {
     this.usuarioAtualizacao = usuario;
   }
 
-  // Métodos de atualização
+  // ==================== MÉTODOS DE ATUALIZAÇÃO ====================
+
   public void atualizarMedicoExecutor(Medico medicoExecutor, String usuario) {
     this.medicoExecutor = medicoExecutor;
     this.atualizadoEm = LocalDateTime.now();
@@ -197,6 +326,14 @@ public class PedidoCirurgico {
     this.usuarioAtualizacao = usuario;
   }
 
+  public void atualizarCIDsSecundarios(String cid2, String cid3, String cid4, String usuario) {
+    this.cidCodigo2 = cid2;
+    this.cidCodigo3 = cid3;
+    this.cidCodigo4 = cid4;
+    this.atualizadoEm = LocalDateTime.now();
+    this.usuarioAtualizacao = usuario;
+  }
+
   public void atualizarAgendamento(DataHoraAgendamento agendamento, String usuario) {
     if (status.getTipo().isFinal()) {
       throw new IllegalStateException("Não é possível alterar agendamento de um pedido com status final");
@@ -218,6 +355,45 @@ public class PedidoCirurgico {
     this.usuarioAtualizacao = usuario;
   }
 
+  public void atualizarDadosClinicos(String indicacaoClinica, String relatorioPreOperatorio, String orientacoes, String usuario) {
+    this.indicacaoClinica = indicacaoClinica;
+    this.relatorioPreOperatorio = relatorioPreOperatorio;
+    this.orientacoes = orientacoes;
+    this.atualizadoEm = LocalDateTime.now();
+    this.usuarioAtualizacao = usuario;
+  }
+
+  public void atualizarDadosGuia(String numeroGuia, String registroAns, String numeroGuiaOperadora,
+                                 String codigoOperadora, String nomeContratado, String usuario) {
+    this.numeroGuia = numeroGuia;
+    this.registroAns = registroAns;
+    this.numeroGuiaOperadora = numeroGuiaOperadora;
+    this.codigoOperadora = codigoOperadora;
+    this.nomeContratado = nomeContratado;
+    this.atualizadoEm = LocalDateTime.now();
+    this.usuarioAtualizacao = usuario;
+  }
+
+  public void atualizarDadosInternacao(String caraterAtendimento, String tipoInternacao,
+                                       String regimeInternacao, String qtdDiariasSolicitadas, String usuario) {
+    this.caraterAtendimento = caraterAtendimento;
+    this.tipoInternacao = tipoInternacao;
+    this.regimeInternacao = regimeInternacao;
+    this.qtdDiariasSolicitadas = qtdDiariasSolicitadas;
+    this.atualizadoEm = LocalDateTime.now();
+    this.usuarioAtualizacao = usuario;
+  }
+
+  public void atualizarDadosContatoPaciente(String telefone, String endereco, String cpf, String email, String sexo, String usuario) {
+    this.telefonePaciente = telefone;
+    this.enderecoPaciente = endereco;
+    this.cpfPaciente = cpf;
+    this.emailPaciente = email;
+    this.sexoPaciente = sexo;
+    this.atualizadoEm = LocalDateTime.now();
+    this.usuarioAtualizacao = usuario;
+  }
+
   public void adicionarObservacao(String observacao, String usuario) {
     if (observacao != null && !observacao.trim().isEmpty()) {
       this.observacoes.add(LocalDateTime.now() + " - " + usuario + ": " + observacao.trim());
@@ -234,7 +410,8 @@ public class PedidoCirurgico {
     }
   }
 
-  // Métodos de consulta
+  // ==================== MÉTODOS DE CONSULTA ====================
+
   public boolean podeSerEditado() {
     return status.getTipo() == StatusPedido.Tipo.RASCUNHO ||
             status.getTipo() == StatusPedido.Tipo.PENDENTE;
@@ -250,7 +427,8 @@ public class PedidoCirurgico {
             status.getTipo() == StatusPedido.Tipo.CONFIRMADO;
   }
 
-  // Getters
+  // ==================== GETTERS ====================
+
   public PedidoId getId() {
     return id;
   }
@@ -323,6 +501,89 @@ public class PedidoCirurgico {
     return dataPedido;
   }
 
+  // GETTERS PARA NOVOS CAMPOS
+  public String getIndicacaoClinica() {
+    return indicacaoClinica;
+  }
+
+  public String getRelatorioPreOperatorio() {
+    return relatorioPreOperatorio;
+  }
+
+  public String getOrientacoes() {
+    return orientacoes;
+  }
+
+  public String getTelefonePaciente() {
+    return telefonePaciente;
+  }
+
+  public String getEnderecoPaciente() {
+    return enderecoPaciente;
+  }
+
+  public String getCidCodigo2() {
+    return cidCodigo2;
+  }
+
+  public String getCidCodigo3() {
+    return cidCodigo3;
+  }
+
+  public String getCidCodigo4() {
+    return cidCodigo4;
+  }
+
+  public String getNumeroGuia() {
+    return numeroGuia;
+  }
+
+  public String getRegistroAns() {
+    return registroAns;
+  }
+
+  public String getNumeroGuiaOperadora() {
+    return numeroGuiaOperadora;
+  }
+
+  public String getCodigoOperadora() {
+    return codigoOperadora;
+  }
+
+  public String getNomeContratado() {
+    return nomeContratado;
+  }
+
+  public String getCaraterAtendimento() {
+    return caraterAtendimento;
+  }
+
+  public String getTipoInternacao() {
+    return tipoInternacao;
+  }
+
+  public String getRegimeInternacao() {
+    return regimeInternacao;
+  }
+
+  public String getQtdDiariasSolicitadas() {
+    return qtdDiariasSolicitadas;
+  }
+
+  public String getCpfPaciente() {
+    return cpfPaciente;
+  }
+
+  public String getEmailPaciente() {
+    return emailPaciente;
+  }
+
+  public String getSexoPaciente() {
+    return sexoPaciente;
+  }
+
+  // ==================== MÉTODOS DE CONSULTA BOOLEANOS ====================
+
   public boolean isRascunho() {
     return status.getTipo() == StatusPedido.Tipo.RASCUNHO;
   }
@@ -347,9 +608,27 @@ public class PedidoCirurgico {
     return cid != null;
   }
 
+  public boolean temCIDsSecundarios() {
+    return cidCodigo2 != null || cidCodigo3 != null || cidCodigo4 != null;
+  }
+
   public boolean temDocumentos() {
     return !documentosAnexados.isEmpty();
   }
+
+  public boolean temIndicacaoClinica() {
+    return indicacaoClinica != null && !indicacaoClinica.trim().isEmpty();
+  }
+
+  public boolean temRelatorioPreOperatorio() {
+    return relatorioPreOperatorio != null && !relatorioPreOperatorio.trim().isEmpty();
+  }
+
+  public boolean temDadosGuia() {
+    return numeroGuia != null || registroAns != null || numeroGuiaOperadora != null;
+  }
+
+  // ==================== EQUALS, HASHCODE, TOSTRING ====================
 
   @Override
   public boolean equals(Object o) {
@@ -371,6 +650,7 @@ public class PedidoCirurgico {
             ", procedimento=" + procedimento +
             ", status=" + status.getTipo() +
             ", dataPedido=" + dataPedido +
+            ", temIndicacaoClinica=" + temIndicacaoClinica() +
             '}';
   }
 }

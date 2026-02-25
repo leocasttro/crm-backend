@@ -1,6 +1,6 @@
 package org.br.ltec.crmbackend.crm.pedidos.application.useCase;
 
-import org.br.ltec.crmbackend.crm.paciente.application.useCase.CreatePacienteUseCase;  // IMPORT!
+import org.br.ltec.crmbackend.crm.paciente.application.useCase.CreatePacienteUseCase;
 import org.br.ltec.crmbackend.crm.paciente.domain.model.Paciente;
 import org.br.ltec.crmbackend.crm.paciente.domain.port.PacienteRepository;
 import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
@@ -18,17 +18,16 @@ public class CreatePedidoUseCase {
 
   private final PedidoRepository pedidoRepository;
   private final PacienteRepository pacienteRepository;
-  private final CreatePacienteUseCase createPacienteUseCase;  // ✅ ADICIONADO!
+  private final CreatePacienteUseCase createPacienteUseCase;
   private final PedidoBuilder pedidoBuilder;
 
-  // ✅ CONSTRUTOR ATUALIZADO
   public CreatePedidoUseCase(PedidoRepository pedidoRepository,
                              PacienteRepository pacienteRepository,
-                             CreatePacienteUseCase createPacienteUseCase,  // ✅ NOVO PARÂMETRO
+                             CreatePacienteUseCase createPacienteUseCase,
                              PedidoBuilder pedidoBuilder) {
     this.pedidoRepository = pedidoRepository;
     this.pacienteRepository = pacienteRepository;
-    this.createPacienteUseCase = createPacienteUseCase;  // ✅ ATRIBUIR
+    this.createPacienteUseCase = createPacienteUseCase;
     this.pedidoBuilder = pedidoBuilder;
   }
 
@@ -36,9 +35,7 @@ public class CreatePedidoUseCase {
 
     PacienteId pacienteId = null;
 
-    // ✅ AGORA FUNCIONA!
     if (command.getPaciente() != null) {
-      // Cria o paciente com os dados do command
       Paciente novoPaciente = createPacienteUseCase.execute(command.getPaciente());
       pacienteId = novoPaciente.getId();
       System.out.println(">>> Paciente criado com ID: " + pacienteId);
@@ -50,14 +47,13 @@ public class CreatePedidoUseCase {
       throw new IllegalArgumentException("É necessário informar dados do paciente");
     }
 
-    // Validar convênio (só se tiver validade)
+    // Validar convênio
     if (command.getConvenioValidadeCarteira() != null &&
             command.getConvenioValidadeCarteira().isBefore(java.time.LocalDate.now())) {
       throw new IllegalArgumentException("Convênio está vencido");
     }
 
     try {
-      // Criar Value Objects
       PedidoId pedidoId = PedidoId.generate();
 
       // Médico solicitante
@@ -67,7 +63,7 @@ public class CreatePedidoUseCase {
               command.getMedicoSolicitanteEspecialidade()
       );
 
-      // Médico executor (se fornecido)
+      // Médico executor
       Medico medicoExecutor = null;
       if (command.getMedicoExecutorNome() != null && !command.getMedicoExecutorNome().trim().isEmpty()) {
         medicoExecutor = new Medico(
@@ -77,7 +73,7 @@ public class CreatePedidoUseCase {
         );
       }
 
-      // Procedimento
+      // PROCEDIMENTO - Usar a descrição do procedimento (não a indicação clínica)
       Procedimento procedimento = new Procedimento(
               command.getProcedimentoCodigoTUSS(),
               command.getProcedimentoDescricao(),
@@ -92,13 +88,13 @@ public class CreatePedidoUseCase {
               command.getConvenioTipoPlano()
       );
 
-      // CID (se fornecido)
+      // CID
       CID cid = null;
       if (command.getCidCodigo() != null && !command.getCidCodigo().trim().isEmpty()) {
         cid = new CID(command.getCidCodigo(), command.getCidDescricao());
       }
 
-      // Agendamento (se fornecido)
+      // Agendamento
       DataHoraAgendamento agendamento = null;
       if (command.getAgendamentoDataHora() != null) {
         agendamento = new DataHoraAgendamento(
@@ -120,7 +116,8 @@ public class CreatePedidoUseCase {
               command.getLateralidade() :
               new Lateralidade(Lateralidade.Tipo.NAO_APLICAVEL);
 
-      // Criar pedido usando o builder
+      // Usar o builder com todos os métodos individuais
+// Usar o builder com todos os métodos individuais
       PedidoCirurgico pedido = pedidoBuilder
               .comId(pedidoId)
               .comPacienteId(pacienteId)
@@ -137,9 +134,40 @@ public class CreatePedidoUseCase {
               .comDocumentosAnexados(command.getDocumentosAnexados())
               .comUsuarioCriacao(command.getUsuarioCriacao())
               .comDataPedido(command.getDataPedido())
+
+              // 🔥 DADOS CLÍNICOS
+              .comIndicacaoClinica(command.getIndicacaoClinica())
+              .comRelatorioPreOperatorio(command.getRelatorioPreOperatorio())
+              .comOrientacoes(command.getOrientacoes())
+
+              // 🔥 CIDs secundários - CORRIGIDO: usar o método existente
+              .comCidsSecundarios(
+                      command.getCidCodigo2(),
+                      command.getCidCodigo3(),
+                      command.getCidCodigo4()
+              )
+
+              // 🔥 Dados da guia
+              .comNumeroGuia(command.getNumeroGuia())
+              .comRegistroAns(command.getRegistroAns())
+              .comNumeroGuiaOperadora(command.getNumeroGuiaOperadora())
+              .comCodigoOperadora(command.getCodigoOperadora())
+              .comNomeContratado(command.getNomeContratado())
+
+              // 🔥 Dados da internação
+              .comCaraterAtendimento(command.getCaraterAtendimento())
+              .comTipoInternacao(command.getTipoInternacao())
+              .comRegimeInternacao(command.getRegimeInternacao())
+              .comQtdDiariasSolicitadas(command.getQtdDiariasSolicitadas())
+
+              // 🔥 Dados de contato do paciente
+              .comTelefonePaciente(command.getTelefonePaciente())
+              .comEnderecoPaciente(command.getEnderecoPaciente())
+              .comCpfPaciente(command.getCpfPaciente())
+              .comEmailPaciente(command.getEmailPaciente())
+              .comSexoPaciente(command.getSexoPaciente())
               .build();
 
-      // Salvar pedido
       return pedidoRepository.salvar(pedido);
 
     } catch (IllegalArgumentException e) {

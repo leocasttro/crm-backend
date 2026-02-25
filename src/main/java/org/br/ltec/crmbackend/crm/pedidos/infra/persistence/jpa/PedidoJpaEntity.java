@@ -31,7 +31,6 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   @Column(name = "id", nullable = false, updatable = false)
   private UUID id;
 
-  // ✅ Spring Data usa isso pra decidir INSERT vs UPDATE
   @Transient
   private boolean isNew = true;
 
@@ -42,7 +41,6 @@ public class PedidoJpaEntity implements Persistable<UUID> {
 
   @Override
   public boolean isNew() {
-    // se id ainda não existe, é novo
     return isNew || id == null;
   }
 
@@ -54,16 +52,11 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   @PrePersist
   protected void prePersist() {
     this.isNew = true;
-
-    // ✅ garante id mesmo se vier null
     if (this.id == null) {
       this.id = UUID.randomUUID();
     }
-
-    // datas padrão
     this.criadoEm = LocalDateTime.now();
     this.dataPedido = LocalDate.now();
-
     calcularCamposDerivados();
   }
 
@@ -108,6 +101,26 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   @Column(name = "procedimento_categoria", length = 100)
   private String procedimentoCategoria;
 
+  // 🔥 NOVO CAMPO: Indicação Clínica
+  @Column(name = "indicacao_clinica", columnDefinition = "TEXT")
+  private String indicacaoClinica;
+
+  // 🔥 NOVO CAMPO: Relatório Pré-Operatório
+  @Column(name = "relatorio_pre_operatorio", columnDefinition = "TEXT")
+  private String relatorioPreOperatorio;
+
+  // 🔥 NOVO CAMPO: Orientações
+  @Column(name = "orientacoes", columnDefinition = "TEXT")
+  private String orientacoes;
+
+  // 🔥 NOVO CAMPO: Telefone do paciente
+  @Column(name = "telefone_paciente", length = 20)
+  private String telefonePaciente;
+
+  // 🔥 NOVO CAMPO: Endereço do paciente
+  @Column(name = "endereco_paciente", length = 255)
+  private String enderecoPaciente;
+
   // Convênio
   @Column(name = "convenio_nome", nullable = false, length = 100)
   private String convenioNome;
@@ -127,6 +140,16 @@ public class PedidoJpaEntity implements Persistable<UUID> {
 
   @Column(name = "cid_descricao", length = 500)
   private String cidDescricao;
+
+  // CIDs secundários
+  @Column(name = "cid_codigo_2", length = 10)
+  private String cidCodigo2;
+
+  @Column(name = "cid_codigo_3", length = 10)
+  private String cidCodigo3;
+
+  @Column(name = "cid_codigo_4", length = 10)
+  private String cidCodigo4;
 
   // Agendamento (opcional)
   @Column(name = "agendamento_data_hora")
@@ -186,6 +209,34 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   @Column(name = "data_pedido", nullable = false)
   private LocalDate dataPedido;
 
+  // Dados da guia/internação
+  @Column(name = "numero_guia", length = 50)
+  private String numeroGuia;
+
+  @Column(name = "registro_ans", length = 50)
+  private String registroAns;
+
+  @Column(name = "numero_guia_operadora", length = 50)
+  private String numeroGuiaOperadora;
+
+  @Column(name = "codigo_operadora", length = 50)
+  private String codigoOperadora;
+
+  @Column(name = "nome_contratado", length = 255)
+  private String nomeContratado;
+
+  @Column(name = "carater_atendimento", length = 50)
+  private String caraterAtendimento;
+
+  @Column(name = "tipo_internacao", length = 10)
+  private String tipoInternacao;
+
+  @Column(name = "regime_internacao", length = 10)
+  private String regimeInternacao;
+
+  @Column(name = "qtd_diarias_solicitadas", length = 10)
+  private String qtdDiariasSolicitadas;
+
   // Campos calculados para otimização de consultas
   @Column(name = "tem_agendamento")
   private Boolean temAgendamento;
@@ -207,7 +258,6 @@ public class PedidoJpaEntity implements Persistable<UUID> {
     this.temCid = cidCodigo != null && !cidCodigo.trim().isEmpty();
     this.temDocumentos = documentosAnexados != null && !documentosAnexados.trim().isEmpty();
 
-    // cuidado: status pode estar null se mapper não setar (se for teu caso, trate aqui)
     if (status != null) {
       this.ativo = !status.equals("REALIZADO") && !status.equals("CANCELADO") && !status.equals("REJEITADO");
       this.finalizado = status.equals("REALIZADO") || status.equals("CANCELADO") || status.equals("REJEITADO");

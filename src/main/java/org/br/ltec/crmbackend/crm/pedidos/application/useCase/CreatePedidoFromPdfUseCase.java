@@ -49,13 +49,10 @@ public class CreatePedidoFromPdfUseCase {
 
       PedidoExtraido extraido = pedidoPdfExtractor.extract(pdfBytes);
 
-      // Mapear para comando de criação
       CreatePedidoCommand createPedidoCommand = pedidoExtraidoMapper.toCreatePedidoCommand(extraido);
 
-      // Criar pedido (que vai criar paciente automaticamente)
       PedidoCirurgico pedido = createPedidoUseCase.execute(createPedidoCommand);
 
-      // ✅ CONVERTER PROCEDIMENTOS PARA O FORMATO DE RESPOSTA
       List<ImportPedidoPdfResponse.ProcedimentoResponse> procedimentosResponse =
               extraido.getProcedimentos().stream()
                       .map(p -> new ImportPedidoPdfResponse.ProcedimentoResponse(
@@ -65,20 +62,18 @@ public class CreatePedidoFromPdfUseCase {
                       ))
                       .collect(Collectors.toList());
 
-      // Montar resposta com os procedimentos
       return ImportPedidoPdfResponse.sucesso(
               pedido.getId().getValue().toString(),
               pedido.getPacienteId() != null ? pedido.getPacienteId().getValue().toString() : null,
-              extraido.getNomePaciente() != null ? extraido.getNomePaciente() : null,
-              extraido.getConvenio(),
-              extraido.getCid(),
-              procedimentosResponse  // ✅ PASSAR A LISTA
+              extraido,
+              procedimentosResponse
       );
 
     } catch (IOException e) {
       throw new RuntimeException("Erro ao processar arquivo PDF", e);
     }
   }
+
 
   public static class Resultado {
     private String pedidoId;

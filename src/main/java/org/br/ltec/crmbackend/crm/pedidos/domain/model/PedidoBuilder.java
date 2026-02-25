@@ -31,6 +31,28 @@ public class PedidoBuilder {
   private String usuarioAtualizacao;
   private LocalDate dataPedido;
 
+  // 🔥 NOVOS CAMPOS
+  private String indicacaoClinica;
+  private String relatorioPreOperatorio;
+  private String orientacoes;
+  private String telefonePaciente;
+  private String enderecoPaciente;
+  private String cidCodigo2;
+  private String cidCodigo3;
+  private String cidCodigo4;
+  private String numeroGuia;
+  private String registroAns;
+  private String numeroGuiaOperadora;
+  private String codigoOperadora;
+  private String nomeContratado;
+  private String caraterAtendimento;
+  private String tipoInternacao;
+  private String regimeInternacao;
+  private String qtdDiariasSolicitadas;
+  private String cpfPaciente;
+  private String emailPaciente;
+  private String sexoPaciente;
+
   public PedidoBuilder() {
     this.observacoes = new ArrayList<>();
     this.documentosAnexados = new ArrayList<>();
@@ -71,6 +93,14 @@ public class PedidoBuilder {
 
   public PedidoBuilder comCid(CID cid) {
     this.cid = cid;
+    return this;
+  }
+
+  // 🔥 NOVO: Método para CIDs secundários
+  public PedidoBuilder comCidsSecundarios(String cid2, String cid3, String cid4) {
+    this.cidCodigo2 = cid2;
+    this.cidCodigo3 = cid3;
+    this.cidCodigo4 = cid4;
     return this;
   }
 
@@ -119,6 +149,95 @@ public class PedidoBuilder {
     if (documentosAnexados != null) {
       this.documentosAnexados = new ArrayList<>(documentosAnexados);
     }
+    return this;
+  }
+
+  // 🔥 NOVOS MÉTODOS PARA DADOS CLÍNICOS
+  public PedidoBuilder comIndicacaoClinica(String indicacaoClinica) {
+    this.indicacaoClinica = indicacaoClinica;
+    return this;
+  }
+
+  public PedidoBuilder comRelatorioPreOperatorio(String relatorioPreOperatorio) {
+    this.relatorioPreOperatorio = relatorioPreOperatorio;
+    return this;
+  }
+
+  public PedidoBuilder comOrientacoes(String orientacoes) {
+    this.orientacoes = orientacoes;
+    return this;
+  }
+
+  // 🔥 NOVOS MÉTODOS PARA DADOS DO PACIENTE
+  public PedidoBuilder comTelefonePaciente(String telefonePaciente) {
+    this.telefonePaciente = telefonePaciente;
+    return this;
+  }
+
+  public PedidoBuilder comEnderecoPaciente(String enderecoPaciente) {
+    this.enderecoPaciente = enderecoPaciente;
+    return this;
+  }
+
+  public PedidoBuilder comCpfPaciente(String cpfPaciente) {
+    this.cpfPaciente = cpfPaciente;
+    return this;
+  }
+
+  public PedidoBuilder comEmailPaciente(String emailPaciente) {
+    this.emailPaciente = emailPaciente;
+    return this;
+  }
+
+  public PedidoBuilder comSexoPaciente(String sexoPaciente) {
+    this.sexoPaciente = sexoPaciente;
+    return this;
+  }
+
+  // 🔥 NOVOS MÉTODOS PARA DADOS DA GUIA
+  public PedidoBuilder comNumeroGuia(String numeroGuia) {
+    this.numeroGuia = numeroGuia;
+    return this;
+  }
+
+  public PedidoBuilder comRegistroAns(String registroAns) {
+    this.registroAns = registroAns;
+    return this;
+  }
+
+  public PedidoBuilder comNumeroGuiaOperadora(String numeroGuiaOperadora) {
+    this.numeroGuiaOperadora = numeroGuiaOperadora;
+    return this;
+  }
+
+  public PedidoBuilder comCodigoOperadora(String codigoOperadora) {
+    this.codigoOperadora = codigoOperadora;
+    return this;
+  }
+
+  public PedidoBuilder comNomeContratado(String nomeContratado) {
+    this.nomeContratado = nomeContratado;
+    return this;
+  }
+
+  // 🔥 NOVOS MÉTODOS PARA DADOS DA INTERNAÇÃO
+  public PedidoBuilder comCaraterAtendimento(String caraterAtendimento) {
+    this.caraterAtendimento = caraterAtendimento;
+    return this;
+  }
+
+  public PedidoBuilder comTipoInternacao(String tipoInternacao) {
+    this.tipoInternacao = tipoInternacao;
+    return this;
+  }
+
+  public PedidoBuilder comRegimeInternacao(String regimeInternacao) {
+    this.regimeInternacao = regimeInternacao;
+    return this;
+  }
+
+  public PedidoBuilder comQtdDiariasSolicitadas(String qtdDiariasSolicitadas) {
+    this.qtdDiariasSolicitadas = qtdDiariasSolicitadas;
     return this;
   }
 
@@ -173,7 +292,29 @@ public class PedidoBuilder {
             atualizadoEm,
             usuarioCriacao,
             usuarioAtualizacao,
-            dataPedido
+            dataPedido,
+
+            // 🔥 NOVOS CAMPOS
+            indicacaoClinica,
+            relatorioPreOperatorio,
+            orientacoes,
+            telefonePaciente,
+            enderecoPaciente,
+            cidCodigo2,
+            cidCodigo3,
+            cidCodigo4,
+            numeroGuia,
+            registroAns,
+            numeroGuiaOperadora,
+            codigoOperadora,
+            nomeContratado,
+            caraterAtendimento,
+            tipoInternacao,
+            regimeInternacao,
+            qtdDiariasSolicitadas,
+            cpfPaciente,
+            emailPaciente,
+            sexoPaciente
     );
   }
 }

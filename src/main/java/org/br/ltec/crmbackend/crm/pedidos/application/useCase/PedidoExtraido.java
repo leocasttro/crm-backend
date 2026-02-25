@@ -43,6 +43,11 @@ public class PedidoExtraido {
   private String ufConselho;
   private String cbo;
 
+  // 🔥 NOVOS CAMPOS PARA MÉDICO EXECUTOR
+  private String medicoExecutorNome;
+  private String medicoExecutorCrm;
+  private String medicoExecutorEspecialidade;
+
   // Dados da guia
   private String numeroGuia;
   private String registroAns;
@@ -73,6 +78,15 @@ public class PedidoExtraido {
   // Contato
   private String telefone;
   private String enderecoMedico;
+
+  // Relatório e orientações
+  private String relatorioPreOperatorio;
+  private String orientacao;
+
+  // 🔥 NOVOS CAMPOS DE PACIENTE (que estavam faltando)
+  private String cpf;
+  private String email;
+  private String sexo;
 
   // ==================== GETTERS E SETTERS (existentes) ====================
 
@@ -254,6 +268,31 @@ public class PedidoExtraido {
     this.cbo = cbo;
   }
 
+  // 🔥 GETTERS E SETTERS PARA MÉDICO EXECUTOR
+  public String getMedicoExecutorNome() {
+    return medicoExecutorNome;
+  }
+
+  public void setMedicoExecutorNome(String medicoExecutorNome) {
+    this.medicoExecutorNome = medicoExecutorNome;
+  }
+
+  public String getMedicoExecutorCrm() {
+    return medicoExecutorCrm;
+  }
+
+  public void setMedicoExecutorCrm(String medicoExecutorCrm) {
+    this.medicoExecutorCrm = medicoExecutorCrm;
+  }
+
+  public String getMedicoExecutorEspecialidade() {
+    return medicoExecutorEspecialidade;
+  }
+
+  public void setMedicoExecutorEspecialidade(String medicoExecutorEspecialidade) {
+    this.medicoExecutorEspecialidade = medicoExecutorEspecialidade;
+  }
+
   public String getNumeroGuia() {
     return numeroGuia;
   }
@@ -390,19 +429,60 @@ public class PedidoExtraido {
     this.enderecoMedico = enderecoMedico;
   }
 
+  public String getRelatorioPreOperatorio() {
+    return relatorioPreOperatorio;
+  }
+
+  public void setRelatorioPreOperatorio(String relatorioPreOperatorio) {
+    this.relatorioPreOperatorio = relatorioPreOperatorio;
+  }
+
+  public String getOrientacoes() {
+    return orientacao;
+  }
+
+  public void setOrientacoes(String orientacao) {
+    this.orientacao = orientacao;
+  }
+
+  // 🔥 GETTERS E SETTERS PARA OS NOVOS CAMPOS DE PACIENTE
+  public String getCpf() {
+    return cpf;
+  }
+
+  public void setCpf(String cpf) {
+    this.cpf = cpf;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getSexo() {
+    return sexo;
+  }
+
+  public void setSexo(String sexo) {
+    this.sexo = sexo;
+  }
+
   // ==================== TIPOS AUXILIARES ATUALIZADOS ====================
 
   public static class ProcedimentoExtraido {
     private String codigo;
     private String descricao;
-    private String quantidade;  // NOVO: quantidade do procedimento
+    private String quantidade;
 
     public ProcedimentoExtraido() {}
 
     public ProcedimentoExtraido(String codigo, String descricao) {
       this.codigo = codigo;
       this.descricao = descricao;
-      this.quantidade = "1"; // default
+      this.quantidade = "1";
     }
 
     public ProcedimentoExtraido(String codigo, String descricao, String quantidade) {

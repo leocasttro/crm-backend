@@ -18,7 +18,7 @@ public class Procedimento {
     if (descricao == null || descricao.trim().isEmpty()) {
       throw new IllegalArgumentException("Descrição do procedimento é obrigatória");
     }
-    if (descricao.trim().length() < 5 || descricao.trim().length() > 200) {
+    if (descricao.trim().length() < 5 || descricao.trim().length() > 6000) {
       throw new IllegalArgumentException("Descrição deve ter entre 5 e 200 caracteres");
     }
   }

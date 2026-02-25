@@ -144,23 +144,83 @@ public class PedidoController {
     return PedidoResponse.builder()
             .id(p.getId().getValue().toString())
             .pacienteId(p.getPacienteId().getValue().toString())
-            .medicoSolicitante(p.getMedicoSolicitante().getNome())
-            .medicoSolicitanteEspecialidade(p.getMedicoSolicitante().getEspecialidade())
-            .procedimento(p.getProcedimento().getDescricao())
-            .procedimentoCodigo(p.getProcedimento().getCodigoTUSS())
-            .convenio(p.getConvenio().getNome())
-            .convenioValidadeCarteira(p.getConvenio().getValidade())
-            .cid(p.getCid() != null ? p.getCid().getCodigo() : null)
-            .cidDescricao(p.getCid() != null ? p.getCid().getDescricao() : null)
+
+            // Status e prioridade
+            .status(p.getStatus().getTipo().name())
             .prioridade(p.getPrioridade().getTipo().name())
             .prioridadeJustificativa(p.getPrioridade().getJustificativa())
-            .status(p.getStatus().getTipo().name())
-            .lateralidade(p.getLateralidade().getTipo().name())
-            .dataPedido(p.getDataPedido())
+
+            // Datas
             .criadoEm(p.getCriadoEm())
+            .atualizadoEm(p.getAtualizadoEm())
+            .dataPedido(p.getDataPedido())
             .agendadoPara(p.temAgendamento() ? p.getAgendamento().getDataHora() : null)
+
+            // Procedimento
+            .procedimento(p.getProcedimento().getDescricao())
+            .procedimentoDescricao(p.getProcedimento().getDescricao())
+            .procedimentoCodigo(p.getProcedimento().getCodigoTUSS())
+            .procedimentoCategoria(p.getProcedimento().getCategoria())
+
+            // 🔥 DADOS CLÍNICOS
+            .indicacaoClinica(p.getIndicacaoClinica())
+            .relatorioPreOperatorio(p.getRelatorioPreOperatorio())
+            .orientacoes(p.getOrientacoes())
+
+            // Lateralidade
+            .lateralidade(p.getLateralidade().getTipo().name())
+
+            // Convênio
+            .convenio(p.getConvenio().getNome())
+            .convenioNome(p.getConvenio().getNome())
+            .convenioNumeroCarteira(p.getConvenio().getNumeroCarteira())
+            .convenioValidadeCarteira(p.getConvenio().getValidade())
+            .convenioTipoPlano(p.getConvenio().getTipoPlano())
+
+            // Número carteira (alias)
+            .numeroCarteira(p.getConvenio().getNumeroCarteira())
+            .validadeCarteira(p.getConvenio().getValidade())
+
+            // CID
+            .cid(p.getCid() != null ? p.getCid().getCodigo() : null)
+            .cidCodigo(p.getCid() != null ? p.getCid().getCodigo() : null)
+            .cidDescricao(p.getCid() != null ? p.getCid().getDescricao() : null)
+
+            // 🔥 CIDs secundários
+            .cidCodigo2(p.getCidCodigo2())
+            .cidCodigo3(p.getCidCodigo3())
+            .cidCodigo4(p.getCidCodigo4())
+
+            // Médico solicitante
+            .medicoSolicitante(p.getMedicoSolicitante().getNome())
+            .medicoSolicitanteNome(p.getMedicoSolicitante().getNome())
+            .medicoSolicitanteCrm(p.getMedicoSolicitante().getCrm())
+            .medicoSolicitanteEspecialidade(p.getMedicoSolicitante().getEspecialidade())
+
+            // 🔥 Médico executor
+            .medicoExecutorNome(p.getMedicoExecutor() != null ? p.getMedicoExecutor().getNome() : null)
+            .medicoExecutorCrm(p.getMedicoExecutor() != null ? p.getMedicoExecutor().getCrm() : null)
+            .medicoExecutorEspecialidade(p.getMedicoExecutor() != null ? p.getMedicoExecutor().getEspecialidade() : null)
+
+            // 🔥 Dados da guia
+            .numeroGuia(p.getNumeroGuia())
+            .registroAns(p.getRegistroAns())
+            .numeroGuiaOperadora(p.getNumeroGuiaOperadora())
+            .codigoOperadora(p.getCodigoOperadora())
+            .nomeContratado(p.getNomeContratado())
+
+            // 🔥 Dados da internação
+            .caraterAtendimento(p.getCaraterAtendimento())
+            .tipoInternacao(p.getTipoInternacao())
+            .regimeInternacao(p.getRegimeInternacao())
+            .qtdDiariasSolicitadas(p.getQtdDiariasSolicitadas())
+
+            // Documentos e observações
+            .temDocumentos(!p.getDocumentosAnexados().isEmpty())
+            .documentosAnexados(p.getDocumentosAnexados())
+            .observacoes(p.getObservacoes())
             .quantidadeObservacoes(p.getObservacoes().size())
-            .temDocumentos(p.temDocumentos())
+
             .build();
   }
 
