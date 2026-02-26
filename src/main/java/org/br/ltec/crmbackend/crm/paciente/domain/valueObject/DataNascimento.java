@@ -8,13 +8,13 @@ public class DataNascimento {
   private static final int IDADE_MINIMA = 0;
   private static final int IDADE_MAXIMA = 150;
 
-  private final LocalDate valor;
+  private LocalDate valor;
 
   public DataNascimento(LocalDate data) {
     validar(data);
     this.valor = data;
   }
-
+  public DataNascimento() {}
   private void validar(LocalDate data) {
     if (data == null) {
       throw new IllegalArgumentException("Data de nascimento não pode ser nula");

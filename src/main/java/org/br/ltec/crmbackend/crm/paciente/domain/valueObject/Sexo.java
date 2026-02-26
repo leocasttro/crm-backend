@@ -1,5 +1,8 @@
 package org.br.ltec.crmbackend.crm.paciente.domain.valueObject;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -47,7 +50,8 @@ public class Sexo {
 
   private final Tipo tipo;
 
-  public Sexo(Tipo tipo) {
+  @JsonCreator
+  public Sexo(@JsonProperty("tipo") Tipo tipo) {
     this.tipo = tipo != null ? tipo : Tipo.NAO_INFORMADO;
   }
 

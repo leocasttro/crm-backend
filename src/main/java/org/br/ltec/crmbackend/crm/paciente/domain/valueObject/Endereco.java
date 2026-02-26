@@ -37,42 +37,7 @@ public class Endereco {
   private void validar(String logradouro, String numero, String bairro,
                        String cidade, String estado, String cep, String pais) {
 
-    if (logradouro == null || logradouro.trim().isEmpty()) {
-      throw new IllegalArgumentException("Logradouro é obrigatório");
-    }
-
-    if (numero == null || numero.trim().isEmpty()) {
-      throw new IllegalArgumentException("Número é obrigatório");
-    }
-
-    if (bairro == null || bairro.trim().isEmpty()) {
-      throw new IllegalArgumentException("Bairro é obrigatório");
-    }
-
-    if (cidade == null || cidade.trim().isEmpty()) {
-      throw new IllegalArgumentException("Cidade é obrigatória");
-    }
-
-    if (estado == null || estado.trim().isEmpty()) {
-      throw new IllegalArgumentException("Estado é obrigatório");
-    }
-
-    if (estado.length() != 2) {
-      throw new IllegalArgumentException("Estado deve ser sigla de 2 caracteres");
-    }
-
-    if (cep == null || cep.trim().isEmpty()) {
-      throw new IllegalArgumentException("CEP é obrigatório");
-    }
-
-    if (!CEP_PATTERN.matcher(limparCEP(cep)).matches()) {
-      throw new IllegalArgumentException("CEP inválido: " + cep);
-    }
-
-    if (pais == null || pais.trim().isEmpty()) {
-      throw new IllegalArgumentException("País é obrigatório");
-    }
-  }
+ }
 
   private String limparCEP(String cep) {
     return cep.replaceAll("[^\\d]", "");

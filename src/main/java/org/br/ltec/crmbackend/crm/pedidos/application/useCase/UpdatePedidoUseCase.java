@@ -1,144 +1,263 @@
 package org.br.ltec.crmbackend.crm.pedidos.application.useCase;
 
+import org.br.ltec.crmbackend.crm.paciente.domain.model.Paciente;
+import org.br.ltec.crmbackend.crm.paciente.domain.port.PacienteRepository;
+import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.Endereco;
 import org.br.ltec.crmbackend.crm.pedidos.application.command.UpdatePedidoCommand;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoCirurgico;
 import org.br.ltec.crmbackend.crm.pedidos.domain.port.PedidoRepository;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.extern.slf4j.Slf4j;
 
-import java.util.Optional;
+import java.time.LocalDate;
 
+@Slf4j
 @Service
 @Transactional
 public class UpdatePedidoUseCase {
 
   private final PedidoRepository pedidoRepository;
+  private final PacienteRepository pacienteRepository;
 
-  public UpdatePedidoUseCase(PedidoRepository pedidoRepository) {
+  public UpdatePedidoUseCase(PedidoRepository pedidoRepository,
+                             PacienteRepository pacienteRepository) {
     this.pedidoRepository = pedidoRepository;
+    this.pacienteRepository = pacienteRepository;
   }
 
+  @Transactional
   public PedidoCirurgico execute(UpdatePedidoCommand command) {
+    log.info("Iniciando atualização do pedido: {}", command.getPedidoId());
+
     // Buscar pedido existente
     PedidoId pedidoId = PedidoId.fromString(command.getPedidoId());
     PedidoCirurgico pedido = pedidoRepository.buscarPorId(pedidoId)
             .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado com ID: " + command.getPedidoId()));
 
-    // Atualizar médico executor se fornecido
-    if (command.getMedicoExecutorNome() != null && !command.getMedicoExecutorNome().trim().isEmpty()) {
-      Medico medicoExecutor = new Medico(
-              command.getMedicoExecutorNome(),
-              command.getMedicoExecutorCrm(),
-              command.getMedicoExecutorEspecialidade()
+    String usuario = command.getUsuarioAtualizacao() != null ? command.getUsuarioAtualizacao() : "sistema";
+
+    // Buscar paciente associado ao pedido
+    PedidoCirurgico finalPedido = pedido;
+    Paciente paciente = pacienteRepository.buscarPorId(pedido.getPacienteId())
+            .orElseThrow(() -> new IllegalArgumentException("Paciente não encontrado com ID: " + finalPedido.getPacienteId()));
+
+    log.info("Paciente encontrado: ID={}, Nome atual={}", paciente.getId(), paciente.getNome());
+
+    boolean pacienteModificado = false;
+
+    // ==================== DADOS DO PACIENTE ====================
+    if (command.getNomePaciente() != null) {
+      log.info("Alterando nome de '{}' para '{}'", paciente.getNome(), command.getNomePaciente());
+      paciente.setNome(command.getNomePaciente());
+      pacienteModificado = true;
+    }
+
+    if (command.getDataNascimento() != null) {
+      log.info("Alterando data nascimento de '{}' para '{}'",
+              paciente.getDataNascimento(), command.getDataNascimento());
+      paciente.setDataNascimento(command.getDataNascimento());
+      pacienteModificado = true;
+    }
+
+    if (command.getCpfPaciente() != null) {
+      log.info("Alterando CPF de '{}' para '{}'",
+              paciente.getDocumento(), command.getCpfPaciente());
+      paciente.setDocumento(command.getCpfPaciente());
+      pacienteModificado = true;
+    }
+
+    if (command.getEmailPaciente() != null) {
+      log.info("Alterando email de '{}' para '{}'",
+              paciente.getEmail(), command.getEmailPaciente());
+      paciente.setEmail(command.getEmailPaciente());
+      pacienteModificado = true;
+    }
+
+    if (command.getTelefonePaciente() != null && !command.getTelefonePaciente().isEmpty()) {
+      log.info("Alterando telefones");
+      paciente.setTelefones(command.getTelefonePaciente());
+      pacienteModificado = true;
+    }
+
+    if (command.getSexoPaciente() != null) {
+      log.info("Alterando sexo de '{}' para '{}'",
+              paciente.getSexo(), command.getSexoPaciente());
+      paciente.setSexo(command.getSexoPaciente());
+      pacienteModificado = true;
+    }
+
+    if (command.getEnderecoPaciente() != null && command.getEnderecoPaciente().isPresent()) {
+      String enderecoCompleto = command.getEnderecoPaciente().get();
+      log.info("Alterando endereço para: {}", enderecoCompleto);
+
+      String[] partes = enderecoCompleto.split(",");
+      Endereco novoEndereco = new Endereco(
+              partes.length > 0 ? partes[0].trim() : "",
+              partes.length > 1 ? partes[1].trim() : "",
+              partes.length > 2 ? partes[2].trim() : "",
+              partes.length > 3 ? partes[3].trim() : "",
+              partes.length > 4 ? partes[4].trim() : "",
+              partes.length > 5 ? partes[5].trim() : "",
+              ""
       );
-      pedido.atualizarMedicoExecutor(medicoExecutor, command.getUsuarioAtualizacao());
+      paciente.setEndereco(novoEndereco);
+      pacienteModificado = true;
     }
 
-    // Atualizar procedimento se fornecido
-    if (command.getProcedimentoCodigoTUSS() != null && !command.getProcedimentoCodigoTUSS().trim().isEmpty()) {
-      Procedimento procedimento = new Procedimento(
-              command.getProcedimentoCodigoTUSS(),
-              command.getProcedimentoDescricao(),
-              command.getProcedimentoCategoria()
+    // Salvar paciente se modificado
+    if (pacienteModificado) {
+      log.info("Salvando paciente modificado...");
+      paciente = pacienteRepository.salvar(paciente);
+      pacienteRepository.flush();
+    }
+
+    boolean pedidoModificado = false;
+
+    // ==================== MÉDICO ====================
+    if (command.getMedicoSolicitanteNome() != null) {
+      log.info("Alterando médico solicitante para: {}", command.getMedicoSolicitanteNome());
+
+      String crm = command.getMedicoSolicitanteCrm() != null
+              ? command.getMedicoSolicitanteCrm()
+              : (pedido.getMedicoSolicitante() != null ? pedido.getMedicoSolicitante().getCrm() : null);
+
+      String especialidade = command.getMedicoSolicitanteEspecialidade() != null
+              ? command.getMedicoSolicitanteEspecialidade()
+              : (pedido.getMedicoSolicitante() != null ? pedido.getMedicoSolicitante().getEspecialidade() : null);
+
+      Medico medicoSolicitante = new Medico(
+              command.getMedicoSolicitanteNome(),
+              crm,
+              especialidade
       );
-      pedido.atualizarProcedimento(procedimento, command.getUsuarioAtualizacao());
+      pedido.setMedicoSolicitante(medicoSolicitante);
+      pedidoModificado = true;
+    } else if (command.getMedicoSolicitanteCrm() != null || command.getMedicoSolicitanteEspecialidade() != null) {
+      if (pedido.getMedicoSolicitante() != null) {
+        String nome = pedido.getMedicoSolicitante().getNome();
+        String crm = command.getMedicoSolicitanteCrm() != null
+                ? command.getMedicoSolicitanteCrm()
+                : pedido.getMedicoSolicitante().getCrm();
+        String especialidade = command.getMedicoSolicitanteEspecialidade() != null
+                ? command.getMedicoSolicitanteEspecialidade()
+                : pedido.getMedicoSolicitante().getEspecialidade();
+
+        Medico medicoSolicitante = new Medico(nome, crm, especialidade);
+        pedido.setMedicoSolicitante(medicoSolicitante);
+        pedidoModificado = true;
+      }
     }
 
-    // Atualizar convênio se fornecido
-    if (command.getConvenioNome() != null && !command.getConvenioNome().trim().isEmpty()) {
-      Convenio convenio = new Convenio(
-              command.getConvenioNome(),
-              command.getConvenioNumeroCarteira(),
-              command.getConvenioValidadeCarteira(),
-              command.getConvenioTipoPlano()
-      );
-      pedido.atualizarConvenio(convenio, command.getUsuarioAtualizacao());
+    // ==================== PROCEDIMENTO ====================
+    if (command.getProcedimentoDescricao() != null ||
+            command.getProcedimentoCodigoTUSS() != null ||
+            command.getProcedimentoCategoria() != null) {
+
+      log.info("Alterando procedimento");
+
+      String codigoTUSS = command.getProcedimentoCodigoTUSS() != null
+              ? command.getProcedimentoCodigoTUSS()
+              : (pedido.getProcedimento() != null ? pedido.getProcedimento().getCodigoTUSS() : null);
+
+      String descricao = command.getProcedimentoDescricao() != null
+              ? command.getProcedimentoDescricao()
+              : (pedido.getProcedimento() != null ? pedido.getProcedimento().getDescricao() : null);
+
+      String categoria = command.getProcedimentoCategoria() != null
+              ? command.getProcedimentoCategoria()
+              : (pedido.getProcedimento() != null ? pedido.getProcedimento().getCategoria() : null);
+
+      if (descricao != null) {
+        Procedimento procedimento = new Procedimento(codigoTUSS, descricao, categoria);
+        pedido.atualizarProcedimento(procedimento, usuario);
+        pedidoModificado = true;
+      }
     }
 
-    // Atualizar CID se fornecido
-    if (command.getCidCodigo() != null && !command.getCidCodigo().trim().isEmpty()) {
-      CID cid = new CID(command.getCidCodigo(), command.getCidDescricao());
-      pedido.atualizarCID(cid, command.getUsuarioAtualizacao());
+    // ==================== CONVÊNIO ====================
+    if (command.getConvenioNome() != null ||
+            command.getConvenioNumeroCarteira() != null ||
+            command.getConvenioValidadeCarteira() != null ||
+            command.getConvenioTipoPlano() != null) {
+
+      log.info("Alterando convênio");
+
+      String nome = command.getConvenioNome() != null
+              ? command.getConvenioNome()
+              : (pedido.getConvenio() != null ? pedido.getConvenio().getNome() : null);
+
+      String numeroCarteira = command.getConvenioNumeroCarteira() != null
+              ? command.getConvenioNumeroCarteira()
+              : (pedido.getConvenio() != null ? pedido.getConvenio().getNumeroCarteira() : null);
+
+      LocalDate validade = command.getConvenioValidadeCarteira() != null
+              ? command.getConvenioValidadeCarteira()
+              : (pedido.getConvenio() != null ? pedido.getConvenio().getValidade() : null);
+
+      String tipoPlano = command.getConvenioTipoPlano() != null
+              ? command.getConvenioTipoPlano()
+              : (pedido.getConvenio() != null ? pedido.getConvenio().getTipoPlano() : null);
+
+      if (nome != null) {
+        Convenio convenio = new Convenio(nome, numeroCarteira, validade, tipoPlano);
+        pedido.atualizarConvenio(convenio, usuario);
+        pedidoModificado = true;
+      }
     }
 
-    // Atualizar agendamento se fornecido
-    if (command.getAgendamentoDataHora() != null) {
-      DataHoraAgendamento agendamento = new DataHoraAgendamento(
-              command.getAgendamentoDataHora(),
-              command.getAgendamentoSala(),
-              command.getAgendamentoDuracaoEstimada(),
-              command.getAgendamentoObservacoes()
-      );
-      pedido.atualizarAgendamento(agendamento, command.getUsuarioAtualizacao());
+    // ==================== CID ====================
+    if (command.getCidCodigo() != null || command.getCidDescricao() != null) {
+      log.info("Alterando CID para: {}", command.getCidCodigo());
+
+      String codigo = command.getCidCodigo() != null
+              ? command.getCidCodigo()
+              : (pedido.getCid() != null ? pedido.getCid().getCodigo() : null);
+
+      String descricao = command.getCidDescricao() != null
+              ? command.getCidDescricao()
+              : (pedido.getCid() != null ? pedido.getCid().getDescricao() : null);
+
+      if (codigo != null) {
+        CID cid = new CID(codigo, descricao);
+        pedido.atualizarCID(cid, usuario);
+        pedidoModificado = true;
+      }
     }
 
-    // Atualizar status se fornecido
-    if (command.getStatus() != null && !command.getStatus().trim().isEmpty()) {
-      atualizarStatusPedido(pedido, command.getStatus(),
-              command.getStatusObservacao(), command.getUsuarioAtualizacao());
-    }
-
-    // Atualizar prioridade se fornecida
+    // ==================== PRIORIDADE ====================
     if (command.getPrioridade() != null) {
-      pedido.atualizarPrioridade(command.getPrioridade(), command.getUsuarioAtualizacao());
+      log.info("Alterando prioridade para: {}", command.getPrioridade());
+      pedido.atualizarPrioridade(command.getPrioridade(), usuario);
+      pedidoModificado = true;
     }
 
-    // Atualizar lateralidade se fornecida
-    if (command.getLateralidade() != null) {
-      pedido.atualizarLateralidade(command.getLateralidade(), command.getUsuarioAtualizacao());
+    // ==================== DATA DO PEDIDO ====================
+    if (command.getDataPedido() != null) {
+      log.info("Alterando data do pedido para: {}", command.getDataPedido());
+      pedido.setDataPedido(command.getDataPedido());
+      pedidoModificado = true;
     }
 
-    // Adicionar observações se fornecidas
-    if (command.getObservacoes() != null) {
+    // ==================== OBSERVAÇÕES ====================
+    if (command.getObservacoes() != null && !command.getObservacoes().isEmpty()) {
+      log.info("Adicionando {} observações", command.getObservacoes().size());
+      PedidoCirurgico finalPedido1 = pedido;
       command.getObservacoes().forEach(obs ->
-              pedido.adicionarObservacao(obs, command.getUsuarioAtualizacao()));
+              finalPedido1.adicionarObservacao(obs, usuario));
+      pedidoModificado = true;
     }
 
-    // Adicionar documentos se fornecidos
-    if (command.getDocumentosAnexados() != null) {
-      command.getDocumentosAnexados().forEach(doc ->
-              pedido.adicionarDocumento(doc, command.getUsuarioAtualizacao()));
+    // 🔥 SALVAR PEDIDO SE MODIFICADO
+    if (pedidoModificado) {
+      log.info("Salvando pedido modificado...");
+      pedido = pedidoRepository.salvar(pedido);
+      pedidoRepository.flush();
     }
 
-    // Salvar pedido atualizado
-    return pedidoRepository.salvar(pedido);
-  }
+    log.info("Finalizando transação - mudanças persistidas");
 
-  private void atualizarStatusPedido(PedidoCirurgico pedido, String novoStatusStr,
-                                     String observacao, String usuario) {
-    StatusPedido.Tipo novoTipo = StatusPedido.Tipo.fromString(novoStatusStr);
-
-    switch (novoTipo) {
-      case PENDENTE:
-        pedido.enviarParaAnalise(usuario);
-        break;
-      case EM_ANALISE:
-        pedido.iniciarAnalise(usuario);
-        break;
-      case AGENDADO:
-        // Para agendar, precisa ter DataHoraAgendamento configurada
-        throw new IllegalStateException("Use o caso de uso de agendamento para alterar status para AGENDADO");
-      case CONFIRMADO:
-        pedido.confirmar(usuario, observacao);
-        break;
-      case EM_PROGRESSO:
-        pedido.iniciarProcedimento(usuario);
-        break;
-      case REALIZADO:
-        pedido.finalizar(usuario, observacao);
-        break;
-      case CANCELADO:
-        pedido.cancelar(usuario, observacao);
-        break;
-      case REJEITADO:
-        pedido.rejeitar(usuario, observacao);
-        break;
-      case RASCUNHO:
-        // Não pode voltar para rascunho
-        throw new IllegalStateException("Não é possível voltar o pedido para status RASCUNHO");
-      default:
-        throw new IllegalArgumentException("Status não suportado: " + novoStatusStr);
-    }
+    return pedido;
   }
 }

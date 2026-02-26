@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -30,7 +31,7 @@ public class PedidoController {
   private final FindPedidoUseCase findUseCase;
   private final AgendarPedidoUseCase agendarUseCase;
   private final StatusPedidoUseCase statusUseCase;
-  private final UpdatePedidoUseCase updateUseCase;
+  private final UpdatePedidoUseCase updatePedidoUseCase;
   private final CreatePedidoFromPdfUseCase createFromPdfUseCase;
 
   // ✅ NOVO: para criar paciente dentro do POST /api/pedidos quando pacienteId não vier
@@ -186,12 +187,10 @@ public class PedidoController {
             .cidCodigo(p.getCid() != null ? p.getCid().getCodigo() : null)
             .cidDescricao(p.getCid() != null ? p.getCid().getDescricao() : null)
 
-            // 🔥 CIDs secundários
             .cidCodigo2(p.getCidCodigo2())
             .cidCodigo3(p.getCidCodigo3())
             .cidCodigo4(p.getCidCodigo4())
 
-            // Médico solicitante
             .medicoSolicitante(p.getMedicoSolicitante().getNome())
             .medicoSolicitanteNome(p.getMedicoSolicitante().getNome())
             .medicoSolicitanteCrm(p.getMedicoSolicitante().getCrm())
@@ -222,6 +221,92 @@ public class PedidoController {
             .quantidadeObservacoes(p.getObservacoes().size())
 
             .build();
+  }
+
+  @PutMapping("/{id}")
+  public ResponseEntity<PedidoResponse> atualizarPedido(
+          @PathVariable String id,
+          @Valid @RequestBody UpdatePedidoRequest request) {
+
+    UpdatePedidoCommand command = new UpdatePedidoCommand();
+    command.setPedidoId(id);
+    command.setUsuarioAtualizacao("usuario_atual"); // Pegar do usuário logado (via SecurityContext)
+
+    // ==================== DADOS DO PACIENTE ====================
+    // Nome Completo
+    if (request.getNomePaciente() != null) {
+      command.setNomePaciente(request.getNomePaciente());
+    }
+
+    // Data de Nascimento
+    if (request.getDataNascimento() != null) {
+      command.setDataNascimento(request.getDataNascimento());
+    }
+
+    // CPF
+    if (request.getCpfPaciente() != null) {
+      command.setCpfPaciente(request.getCpfPaciente());
+    }
+
+    // Email
+    if (request.getEmailPaciente() != null) {
+      command.setEmailPaciente(request.getEmailPaciente());
+    }
+
+    // Telefones - ✅ Agora recebe List<Telefone> diretamente
+    if (request.getTelefonesPaciente() != null && !request.getTelefonesPaciente().isEmpty()) {
+      command.setTelefonePaciente(request.getTelefonesPaciente());
+    }
+
+    // Sexo
+    if (request.getSexoPaciente() != null) {
+      command.setSexoPaciente(request.getSexoPaciente());
+    }
+
+    // Endereço (String)
+    if (request.getEnderecoPaciente() != null) {
+      command.setEnderecoPaciente(request.getEnderecoPaciente());
+    }
+
+    // ==================== MÉDICO ====================
+    command.setMedicoSolicitanteNome(request.getMedicoSolicitanteNome());
+    command.setMedicoSolicitanteCrm(request.getMedicoSolicitanteCrm());
+    command.setMedicoSolicitanteEspecialidade(request.getMedicoSolicitanteEspecialidade());
+
+    // ==================== PROCEDIMENTO ====================
+    command.setProcedimentoCodigoTUSS(request.getProcedimentoCodigoTUSS());
+    command.setProcedimentoDescricao(request.getProcedimentoDescricao());
+    command.setProcedimentoCategoria(request.getProcedimentoCategoria());
+
+    // ==================== CONVÊNIO ====================
+    command.setConvenioNome(request.getConvenioNome());
+    command.setConvenioNumeroCarteira(request.getConvenioNumeroCarteira());
+    command.setConvenioValidadeCarteira(request.getConvenioValidadeCarteira());
+    command.setConvenioTipoPlano(request.getConvenioTipoPlano());
+
+    // ==================== CID ====================
+    command.setCidCodigo(request.getCidCodigo());
+    command.setCidDescricao(request.getCidDescricao());
+
+    // ==================== PRIORIDADE ====================
+    if (request.getPrioridade() != null) {
+      command.setPrioridade(new Prioridade(
+              Prioridade.Tipo.fromString(request.getPrioridade()),
+              null // justificativa se houver
+      ));
+    }
+
+    // ==================== DATA DO PEDIDO ====================
+    command.setDataPedido(request.getDataPedido());
+
+    // ==================== OBSERVAÇÕES ====================
+    command.setObservacoes(request.getObservacoes());
+
+    // ==================== EXECUTAR USE CASE ====================
+    PedidoCirurgico pedidoAtualizado = updatePedidoUseCase.execute(command);
+
+    // ==================== RETORNAR RESPOSTA ====================
+    return ResponseEntity.ok(toResponse(pedidoAtualizado));
   }
 
   private PedidoDetalhadoResponse toDetalhadoResponse(PedidoCirurgico p) {

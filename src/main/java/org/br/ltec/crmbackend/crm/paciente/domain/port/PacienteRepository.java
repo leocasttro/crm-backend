@@ -12,6 +12,8 @@ import java.util.Optional;
  */
 public interface PacienteRepository {
 
+  void flush();
+  void clear();
   /**
    * Salva ou atualiza um paciente
    * @return paciente salvo com possíveis alterações (ID gerado, etc.)

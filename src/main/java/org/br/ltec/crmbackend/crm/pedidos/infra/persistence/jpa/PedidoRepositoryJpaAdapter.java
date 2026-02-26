@@ -1,5 +1,7 @@
 package org.br.ltec.crmbackend.crm.pedidos.infra.persistence.jpa;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoCirurgico;
 import org.br.ltec.crmbackend.crm.pedidos.domain.port.PedidoRepository;
@@ -9,15 +11,19 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
+@Transactional
 public class PedidoRepositoryJpaAdapter implements PedidoRepository {
+
+  @PersistenceContext
+  private EntityManager entityManager;
 
   private final SpringDataPedidoJpaRepository springDataPedidoJpaRepository;
   private final PedidoJpaMapper pedidoJpaMapper;
@@ -29,10 +35,22 @@ public class PedidoRepositoryJpaAdapter implements PedidoRepository {
   }
 
   @Override
+  public void flush() {
+    entityManager.flush();
+  }
+
+  @Override
+  public void clear() {
+    entityManager.clear();
+  }
+
+  @Override
   public PedidoCirurgico salvar(PedidoCirurgico pedido) {
+    // 🔥 Usar MERGE em vez de SAVE para evitar conflito de persistência
     PedidoJpaEntity entity = pedidoJpaMapper.toEntity(pedido);
-    PedidoJpaEntity savedEntity = springDataPedidoJpaRepository.save(entity);
-    return pedidoJpaMapper.toDomain(savedEntity);
+    PedidoJpaEntity mergedEntity = entityManager.merge(entity);
+    entityManager.flush(); // Forçar sincronização imediata
+    return pedidoJpaMapper.toDomain(mergedEntity);
   }
 
   @Override
@@ -231,5 +249,4 @@ public class PedidoRepositoryJpaAdapter implements PedidoRepository {
   public long contarPorPacienteId(PacienteId pacienteId) {
     return springDataPedidoJpaRepository.countByPacienteId(pacienteId.getValue());
   }
-
 }

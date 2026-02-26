@@ -69,8 +69,6 @@ public class PacienteJpaMapper {
         telefonesStr.append(telefone.getNumero())
                 .append(";")
                 .append(telefone.getTipo().name())
-                .append(";")
-                .append(telefone.isWhatsApp())
                 .append("|");
       }
 
@@ -84,7 +82,6 @@ public class PacienteJpaMapper {
     // Campos calculados
     entity.setMaiorDeIdade(paciente.isMaiorDeIdade());
     entity.setIdoso(paciente.isIdoso());
-    entity.setPossuiWhatsApp(paciente.possuiWhatsApp());
 
     return entity;
   }
@@ -166,7 +163,7 @@ public class PacienteJpaMapper {
             String numero = parts[0];
             Telefone.TipoTelefone tipo = Telefone.TipoTelefone.valueOf(parts[1]);
             boolean isWhatsApp = Boolean.parseBoolean(parts[2]);
-            telefones.add(new Telefone(numero, tipo, isWhatsApp));
+            telefones.add(new Telefone(numero, tipo));
           }
         }
       }

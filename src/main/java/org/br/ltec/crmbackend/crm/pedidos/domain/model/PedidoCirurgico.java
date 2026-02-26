@@ -441,6 +441,8 @@ public class PedidoCirurgico {
     return medicoSolicitante;
   }
 
+  public void setMedicoSolicitante(Medico medicoSolicitante) { this.medicoSolicitante = medicoSolicitante; }
+
   public Medico getMedicoExecutor() {
     return medicoExecutor;
   }
@@ -500,6 +502,8 @@ public class PedidoCirurgico {
   public LocalDate getDataPedido() {
     return dataPedido;
   }
+
+  public void setDataPedido(LocalDate dataPedido) { this.dataPedido = dataPedido; }
 
   // GETTERS PARA NOVOS CAMPOS
   public String getIndicacaoClinica() {

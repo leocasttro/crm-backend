@@ -11,13 +11,11 @@ public class Telefone {
   private final String numero;
   private final TipoTelefone tipo;
   private final String ddd;
-  private final boolean isWhatsApp;
 
   public enum TipoTelefone {
     CELULAR("Celular"),
     RESIDENCIAL("Residencial"),
-    COMERCIAL("Comercial"),
-    WHATSAPP("WhatsApp");
+    COMERCIAL("Comercial");
 
     private final String descricao;
 
@@ -30,12 +28,11 @@ public class Telefone {
     }
   }
 
-  public Telefone(String numero, TipoTelefone tipo, boolean isWhatsApp) {
+  public Telefone(String numero, TipoTelefone tipo) {
     validar(numero, tipo);
     this.numero = limparFormatacao(numero);
     this.tipo = tipo;
     this.ddd = extrairDDD(this.numero);
-    this.isWhatsApp = isWhatsApp && tipo == TipoTelefone.CELULAR;
   }
 
   private void validar(String numero, TipoTelefone tipo) {
@@ -105,16 +102,8 @@ public class Telefone {
     return ddd;
   }
 
-  public boolean isWhatsApp() {
-    return isWhatsApp;
-  }
-
   public boolean isCelular() {
     return tipo == TipoTelefone.CELULAR;
-  }
-
-  public Telefone comWhatsApp(boolean isWhatsApp) {
-    return new Telefone(this.numero, this.tipo, isWhatsApp);
   }
 
   @Override
@@ -122,18 +111,17 @@ public class Telefone {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     Telefone telefone = (Telefone) o;
-    return isWhatsApp == telefone.isWhatsApp &&
-            Objects.equals(numero, telefone.numero) &&
+    return Objects.equals(numero, telefone.numero) &&
             tipo == telefone.tipo;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(numero, tipo, isWhatsApp);
+    return Objects.hash(numero, tipo);
   }
 
   @Override
   public String toString() {
-    return getNumeroFormatado() + (isWhatsApp ? " (WhatsApp)" : "");
+    return getNumeroFormatado();
   }
 }

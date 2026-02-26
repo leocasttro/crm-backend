@@ -15,6 +15,8 @@ import java.util.Optional;
  */
 public interface PedidoRepository {
 
+  void clear();
+
   /**
    * Salva ou atualiza um pedido
    * @return pedido salvo com possíveis alterações
@@ -147,4 +149,5 @@ public interface PedidoRepository {
    */
   long contarPorPacienteId(PacienteId pacienteId);
 
+  void flush();
 }

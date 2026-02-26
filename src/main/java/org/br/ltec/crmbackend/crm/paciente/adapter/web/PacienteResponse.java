@@ -64,7 +64,6 @@ public class PacienteResponse {
     response.idoso = paciente.isIdoso();
     response.iniciais = paciente.getIniciais();
     response.pronomeTratamento = paciente.getPronomeTratamento();
-    response.possuiWhatsApp = paciente.possuiWhatsApp();
     response.possuiEndereco = paciente.possuiEndereco();
 
     // Endereço (pode ser null)
@@ -170,7 +169,6 @@ public class PacienteResponse {
       response.numero = telefone.getNumero();
       response.numeroFormatado = telefone.getNumeroFormatado();
       response.tipo = telefone.getTipo().name();
-      response.whatsApp = telefone.isWhatsApp();
       response.ddd = telefone.getDDD();
       return response;
     }

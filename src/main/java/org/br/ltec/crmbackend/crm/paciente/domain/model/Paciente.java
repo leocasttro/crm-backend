@@ -11,12 +11,12 @@ import java.util.Optional;
 public class Paciente {
   private final PacienteId id;
   private NomeCompleto nome;
-  private final Documento documento;
-  private final Email email;
-  private final DataNascimento dataNascimento;
+  private Documento documento;
+  private Email email;
+  private DataNascimento dataNascimento;
   private Sexo sexo;
   private Endereco endereco;
-  private final List<Telefone> telefones;
+  private List<Telefone> telefones;
 
   public Paciente(PacienteId id, NomeCompleto nome, Documento documento,
                   Email email, DataNascimento dataNascimento, Sexo sexo) {
@@ -54,14 +54,6 @@ public class Paciente {
     if (telefones.size() > 5) {
       throw new DomainException("Máximo de 5 telefones por paciente");
     }
-
-    long celularesComWhatsApp = telefones.stream()
-            .filter(t -> t.isCelular() && t.isWhatsApp())
-            .count();
-
-    if (celularesComWhatsApp > 1) {
-      throw new DomainException("Apenas um telefone pode ser configurado como WhatsApp");
-    }
   }
 
   // Métodos de atualização
@@ -93,10 +85,6 @@ public class Paciente {
       throw new DomainException("Máximo de 5 telefones atingido");
     }
 
-    if (telefone.isWhatsApp()) {
-      removerWhatsApp();
-    }
-
     telefones.add(telefone);
   }
 
@@ -115,24 +103,8 @@ public class Paciente {
       throw new DomainException("Apenas celulares podem ser WhatsApp");
     }
 
-    removerWhatsApp();
-
-    int index = telefones.indexOf(telefone);
-    Telefone telefoneComWhatsApp = telefone.comWhatsApp(true);
-    telefones.set(index, telefoneComWhatsApp);
   }
 
-  private void removerWhatsApp() {
-    telefones.replaceAll(t ->
-            t.isCelular() && t.isWhatsApp() ? t.comWhatsApp(false) : t
-    );
-  }
-
-  public Optional<Telefone> getTelefoneWhatsApp() {
-    return telefones.stream()
-            .filter(Telefone::isWhatsApp)
-            .findFirst();
-  }
 
   public List<Telefone> getTelefonesCelular() {
     return telefones.stream()
@@ -155,29 +127,43 @@ public class Paciente {
     return nome;
   }
 
+  public void setNome(NomeCompleto nomeCompleto) { this.nome = nomeCompleto; }
+
   public Documento getDocumento() {
     return documento;
   }
+
+  public void setDocumento(Documento cpf) { this.documento = cpf; }
 
   public Email getEmail() {
     return email;
   }
 
+  public void setEmail(Email email) { this.email = email; }
+
   public DataNascimento getDataNascimento() {
     return dataNascimento;
   }
+
+  public void setDataNascimento(DataNascimento dataNascimento) { this.dataNascimento = dataNascimento; }
 
   public Sexo getSexo() {
     return sexo;
   }
 
+  public void setSexo(Sexo sexo) { this.sexo = sexo; }
+
   public Optional<Endereco> getEndereco() {
     return Optional.ofNullable(endereco);
   }
 
+  public void setEndereco(Endereco endereco) { this.endereco = endereco; }
+
   public List<Telefone> getTelefones() {
     return Collections.unmodifiableList(telefones);
   }
+
+  public void setTelefones(List<Telefone> telefones) { this.telefones = new ArrayList<>(telefones); }
 
   public boolean isMaiorDeIdade() {
     return dataNascimento.isMaiorDeIdade();
@@ -195,13 +181,15 @@ public class Paciente {
     return sexo.getPronomeTratamento();
   }
 
-  public boolean possuiWhatsApp() {
-    return getTelefoneWhatsApp().isPresent();
-  }
-
   public boolean possuiEndereco() {
     return endereco != null;
   }
+
+  public void atualizarEndereco(String logradouro, String numero, String complemento,
+                                String bairro, String cidade, String estado, String cep) {
+    this.endereco = new Endereco(logradouro, numero, complemento, bairro, cidade, estado, cep);
+  }
+
 
   @Override
   public boolean equals(Object o) {

@@ -71,7 +71,7 @@ public class UpdatePacienteUseCase {
 
       // Adicionar novos telefones
       List<Telefone> novosTelefones = command.getTelefones().stream()
-              .map(t -> new Telefone(t.getNumero(), t.getTipo(), t.isWhatsApp()))
+              .map(t -> new Telefone(t.getNumero(), t.getTipo()))
               .collect(Collectors.toList());
 
       for (Telefone telefone : novosTelefones) {

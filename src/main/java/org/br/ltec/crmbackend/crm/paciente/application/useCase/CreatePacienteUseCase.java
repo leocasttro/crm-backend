@@ -63,7 +63,7 @@ public class CreatePacienteUseCase {
       // Criar lista de telefones
       List<Telefone> telefones = command.getTelefones() != null ?
               command.getTelefones().stream()
-                      .map(t -> new Telefone(t.getNumero(), t.getTipo(), t.isWhatsApp()))
+                      .map(t -> new Telefone(t.getNumero(), t.getTipo()))
                       .collect(Collectors.toList()) :
               List.of();
 

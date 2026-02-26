@@ -1,8 +1,21 @@
 package org.br.ltec.crmbackend.crm.paciente.domain.valueObject;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import java.util.Objects;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "tipoDocumento"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = Cpf.class, name = "CPF")
+})
 public abstract class Documento {
+
   protected final String numero;
   protected final TipoDocumento tipo;
 
@@ -57,8 +70,11 @@ public abstract class Documento {
     return tipo.name() + ": " + getNumeroFormatado();
   }
 
-  // Factory Method
-  public static Documento criar(String numero, TipoDocumento tipo) {
+  // Factory Method para Jackson
+  @JsonCreator
+  public static Documento criar(
+          @JsonProperty("numero") String numero,
+          @JsonProperty("tipoDocumento") TipoDocumento tipo) {
     return switch (tipo) {
       case CPF -> new Cpf(numero);
     };

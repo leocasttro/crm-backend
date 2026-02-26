@@ -1,19 +1,26 @@
 package org.br.ltec.crmbackend.crm.paciente.infra.persistence.jpa;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.br.ltec.crmbackend.crm.paciente.domain.model.Paciente;
-import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
 import org.br.ltec.crmbackend.crm.paciente.domain.port.PacienteRepository;
+import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Repository
+@Transactional
 public class PacienteRepositoryJpaAdapter implements PacienteRepository {
+
+  @PersistenceContext
+  private EntityManager entityManager;
 
   private final SpringDataPacienteJpaRepository springDataPacienteJpaRepository;
   private final PacienteJpaMapper pacienteJpaMapper;
@@ -26,10 +33,23 @@ public class PacienteRepositoryJpaAdapter implements PacienteRepository {
   }
 
   @Override
+  public void flush() {
+    entityManager.flush();
+  }
+
+  @Override
+  public void clear() {
+    entityManager.clear();
+  }
+
+  @Override
+  @Transactional
   public Paciente salvar(Paciente paciente) {
     PacienteJpaEntity entity = pacienteJpaMapper.toEntity(paciente);
-    PacienteJpaEntity savedEntity = springDataPacienteJpaRepository.save(entity);
-    return pacienteJpaMapper.toDomain(savedEntity);
+    PacienteJpaEntity mergedEntity = entityManager.merge(entity);
+    entityManager.flush();
+
+    return pacienteJpaMapper.toDomain(mergedEntity);
   }
 
   @Override
@@ -82,7 +102,6 @@ public class PacienteRepositoryJpaAdapter implements PacienteRepository {
     Pageable pageable = PageRequest.of(pagina, tamanhoPagina);
     List<PacienteJpaEntity> entities = springDataPacienteJpaRepository.findByNomeContainingIgnoreCase(nome);
 
-    // Paginação manual para consultas customizadas
     int start = pagina * tamanhoPagina;
     int end = Math.min(start + tamanhoPagina, entities.size());
 
