@@ -142,6 +142,14 @@ public class PedidoController {
   }
 
   private PedidoResponse toResponse(PedidoCirurgico p) {
+
+    List<PedidoResponse.ProcedimentoResponse> procedimentosResponse = null;
+    if (p.getTodosProcedimentos() != null && !p.getTodosProcedimentos().isEmpty()) {
+      procedimentosResponse = p.getTodosProcedimentos().stream()
+              .map(this::mapProcedimento)
+              .collect(Collectors.toList());
+    }
+
     return PedidoResponse.builder()
             .id(p.getId().getValue().toString())
             .pacienteId(p.getPacienteId().getValue().toString())
@@ -162,7 +170,7 @@ public class PedidoController {
             .procedimentoDescricao(p.getProcedimento().getDescricao())
             .procedimentoCodigo(p.getProcedimento().getCodigoTUSS())
             .procedimentoCategoria(p.getProcedimento().getCategoria())
-
+            .procedimentos(procedimentosResponse)
             // 🔥 DADOS CLÍNICOS
             .indicacaoClinica(p.getIndicacaoClinica())
             .relatorioPreOperatorio(p.getRelatorioPreOperatorio())
@@ -332,6 +340,16 @@ public class PedidoController {
             .agendadoPara(p.temAgendamento() ? p.getAgendamento().getDataHora() : null)
             .observacoes(p.getObservacoes())
             .documentosAnexados(p.getDocumentosAnexados())
+            .build();
+  }
+
+  private PedidoResponse.ProcedimentoResponse mapProcedimento(Procedimento procedimento) {
+    if (procedimento == null) return null;
+
+    return PedidoResponse.ProcedimentoResponse.builder()
+            .codigoTUSS(procedimento.getCodigoTUSS())
+            .descricao(procedimento.getDescricao())
+            .categoria(procedimento.getCategoria())
             .build();
   }
 }

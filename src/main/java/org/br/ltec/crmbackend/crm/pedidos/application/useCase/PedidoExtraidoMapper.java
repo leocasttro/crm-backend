@@ -7,6 +7,7 @@ import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.Telefone;
 import org.br.ltec.crmbackend.crm.pedidos.application.command.CreatePedidoCommand;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Lateralidade;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Prioridade;
+import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Procedimento;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -25,16 +26,13 @@ public class PedidoExtraidoMapper {
 
     CreatePedidoCommand cmd = new CreatePedidoCommand();
 
-    // 📌 DADOS DO PACIENTE
     CreatePacienteCommand pacienteCmd = criarPacienteCommand(extraido);
     cmd.setPaciente(pacienteCmd);
 
-    // 📌 CONVÊNIO
     cmd.setConvenioNome(extraido.getConvenio());
     cmd.setConvenioNumeroCarteira(extraido.getNumeroCarteira() != null ?
             extraido.getNumeroCarteira() : extrairNumeroCarteira(extraido.getTextoNormalizado()));
 
-    // Validade da carteira
     if (extraido.getValidadeCarteira() != null && !extraido.getValidadeCarteira().isEmpty()) {
       try {
         cmd.setConvenioValidadeCarteira(LocalDate.parse(extraido.getValidadeCarteira(), PDF_DATE));
@@ -49,15 +47,12 @@ public class PedidoExtraidoMapper {
       }
     }
 
-    // 📌 CID PRINCIPAL
     cmd.setCidCodigo(extraido.getCid());
 
-    // 🔥 CIDs SECUNDÁRIOS
     cmd.setCidCodigo2(extraido.getCid2());
     cmd.setCidCodigo3(extraido.getCid3());
     cmd.setCidCodigo4(extraido.getCid4());
 
-    // 📌 MÉDICO
     cmd.setMedicoSolicitanteNome(extraido.getMedicoNome());
     if (extraido.getCrmNumero() != null) {
       String crm = extraido.getCrmNumero();
@@ -67,19 +62,24 @@ public class PedidoExtraidoMapper {
       cmd.setMedicoSolicitanteCrm(crm);
     }
 
-    // Dados completos do médico
     cmd.setMedicoSolicitanteEspecialidade(extraido.getCbo());
     cmd.setMedicoExecutorNome(extraido.getMedicoExecutorNome());
     cmd.setMedicoExecutorCrm(extraido.getMedicoExecutorCrm());
     cmd.setMedicoExecutorEspecialidade(extraido.getMedicoExecutorEspecialidade());
 
-    // 📌 PROCEDIMENTO - CORRIGIDO
     if (extraido.getProcedimentos() != null && !extraido.getProcedimentos().isEmpty()) {
-      var primeiroProcedimento = extraido.getProcedimentos().get(0);
-      cmd.setProcedimentoCodigoTUSS(primeiroProcedimento.getCodigo());
+      List<Procedimento> procedimentos = new ArrayList<>();
 
-      // ✅ SEMPRE usa a descrição do procedimento
-      cmd.setProcedimentoDescricao(primeiroProcedimento.getDescricao());
+      for (var procedimentoExtraido : extraido.getProcedimentos()) {
+        Procedimento proc = new Procedimento(
+                procedimentoExtraido.getCodigo(),
+                procedimentoExtraido.getDescricao(),
+                ""  // categoria vazia
+        );
+        procedimentos.add(proc);
+      }
+
+      cmd.setProcedimentos(procedimentos);
     }
 
     // 🔥 DADOS CLÍNICOS

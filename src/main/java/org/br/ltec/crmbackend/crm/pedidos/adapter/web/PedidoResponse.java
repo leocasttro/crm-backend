@@ -24,11 +24,14 @@ public class PedidoResponse {
   private LocalDate dataSolicitacao;
   private LocalDateTime agendadoPara;
 
-  // Procedimento
+  // Procedimento (campo antigo - manter para compatibilidade)
   private String procedimento;
   private String procedimentoDescricao;
   private String procedimentoCodigo;
   private String procedimentoCategoria;
+
+  // 🔥 Lista completa de procedimentos
+  private List<ProcedimentoResponse> procedimentos;
 
   // Dados clínicos
   private String indicacaoClinica;
@@ -97,4 +100,13 @@ public class PedidoResponse {
   private List<String> documentosAnexados;
   private List<String> observacoes;
   private int quantidadeObservacoes;
+
+  // 🔥 Classe interna para resposta de procedimentos
+  @Data
+  @Builder
+  public static class ProcedimentoResponse {
+    private String codigoTUSS;
+    private String descricao;
+    private String categoria;
+  }
 }

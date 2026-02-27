@@ -3,10 +3,15 @@ package org.br.ltec.crmbackend.crm.pedidos.infra.persistence.jpa;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Procedimento;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.domain.Persistable;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -100,6 +105,10 @@ public class PedidoJpaEntity implements Persistable<UUID> {
 
   @Column(name = "procedimento_categoria", length = 100)
   private String procedimentoCategoria;
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(columnDefinition = "jsonb")
+  private List<Procedimento> procedimentos = new ArrayList<>();
 
   // 🔥 NOVO CAMPO: Indicação Clínica
   @Column(name = "indicacao_clinica", columnDefinition = "TEXT")

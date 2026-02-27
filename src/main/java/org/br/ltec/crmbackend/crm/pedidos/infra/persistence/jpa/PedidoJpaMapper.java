@@ -47,6 +47,8 @@ public class PedidoJpaMapper {
     entity.setProcedimentoDescricao(pedido.getProcedimento().getDescricao());
     entity.setProcedimentoCategoria(pedido.getProcedimento().getCategoria());
 
+    entity.setProcedimentos(pedido.getTodosProcedimentos());
+
     // 🔥 NOVOS CAMPOS DE TEXTO
     entity.setIndicacaoClinica(pedido.getIndicacaoClinica());
     entity.setRelatorioPreOperatorio(pedido.getRelatorioPreOperatorio());
@@ -130,7 +132,7 @@ public class PedidoJpaMapper {
     }
 
     try {
-      // Criar Value Objects
+      // Criar Value Objects (código existente)
       PedidoId id = PedidoId.fromString(entity.getId().toString());
       PacienteId pacienteId = PacienteId.fromString(entity.getPacienteId().toString());
 
@@ -211,7 +213,7 @@ public class PedidoJpaMapper {
         documentosAnexados = Arrays.asList(entity.getDocumentosAnexados().split("\\|"));
       }
 
-      // 🔥 USAR O BUILDER COM TODOS OS CAMPOS
+      // 🔥 CRIAR O PEDIDO COM O BUILDER (sem a lista ainda)
       PedidoCirurgico pedido = new PedidoBuilder()
               .comId(id)
               .comPacienteId(pacienteId)
@@ -231,8 +233,6 @@ public class PedidoJpaMapper {
               .comUsuarioCriacao(entity.getUsuarioCriacao())
               .comUsuarioAtualizacao(entity.getUsuarioAtualizacao())
               .comDataPedido(entity.getDataPedido())
-
-              // 🔥 NOVOS CAMPOS
               .comIndicacaoClinica(entity.getIndicacaoClinica())
               .comRelatorioPreOperatorio(entity.getRelatorioPreOperatorio())
               .comOrientacoes(entity.getOrientacoes())
@@ -253,6 +253,9 @@ public class PedidoJpaMapper {
               .comRegimeInternacao(entity.getRegimeInternacao())
               .comQtdDiariasSolicitadas(entity.getQtdDiariasSolicitadas())
               .build();
+
+      // ✅ AGORA SIM - SETAR A LISTA DE PROCEDIMENTOS USANDO O SETTER!
+      pedido.setTodosProcedimentos(entity.getProcedimentos());
 
       return pedido;
 

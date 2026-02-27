@@ -23,18 +23,18 @@ public class JjwtJwtService implements JwtService {
   @Value("${jwt.secret:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}")
   private String secretKey;
 
-  private long jwtExpiration = 86400000L; // Valor padrão: 24 horas
+  private long jwtExpiration = 7200000; // Valor padrão: 24 horas
 
-  private long refreshExpiration = 604800000L; // Valor padrão: 7 dias
+  private long refreshExpiration = 7200000; // Valor padrão: 7 dias
 
   @Value("${jwt.expiration:#{86400000}}")
   public void setJwtExpiration(String value) {
-    this.jwtExpiration = parseLongSafely(value, 86400000L);
+    this.jwtExpiration = parseLongSafely(value, 7200000);
   }
 
   @Value("${jwt.refresh-expiration:#{604800000}}")
   public void setRefreshExpiration(String value) {
-    this.refreshExpiration = parseLongSafely(value, 604800000L);
+    this.refreshExpiration = parseLongSafely(value, 7200000);
   }
 
   private long parseLongSafely(String value, long defaultValue) {

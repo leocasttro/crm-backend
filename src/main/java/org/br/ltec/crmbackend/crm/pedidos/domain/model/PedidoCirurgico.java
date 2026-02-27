@@ -17,6 +17,7 @@ public class PedidoCirurgico {
   private Medico medicoSolicitante;
   private Medico medicoExecutor;
   private Procedimento procedimento;
+  private List<Procedimento> todosProcedimentos;
   private Convenio convenio;
   private CID cid;
   private DataHoraAgendamento agendamento;
@@ -59,9 +60,9 @@ public class PedidoCirurgico {
   private String emailPaciente;
   private String sexoPaciente;
 
-  // 🔥 Construtor simplificado (CORRIGIDO)
+  // 🔥 Construtor simplificado
   public PedidoCirurgico(PedidoId id, PacienteId pacienteId, Medico medicoSolicitante,
-                         Procedimento procedimento, Convenio convenio,
+                         Procedimento procedimento,  List<Procedimento> todosProcedimentos,  Convenio convenio,
                          Prioridade prioridade, String usuarioCriacao) {
 
     // Inicializa campos obrigatórios
@@ -69,6 +70,7 @@ public class PedidoCirurgico {
     this.pacienteId = pacienteId;
     this.medicoSolicitante = medicoSolicitante;
     this.procedimento = procedimento;
+    this.todosProcedimentos = todosProcedimentos != null ? todosProcedimentos : new ArrayList<>();
     this.convenio = convenio;
     this.prioridade = prioridade;
     this.usuarioCriacao = usuarioCriacao;
@@ -116,6 +118,7 @@ public class PedidoCirurgico {
           Medico medicoSolicitante,
           Medico medicoExecutor,
           Procedimento procedimento,
+          List<Procedimento> todosProcedimentos,
           Convenio convenio,
           CID cid,
           DataHoraAgendamento agendamento,
@@ -159,6 +162,7 @@ public class PedidoCirurgico {
     this.medicoSolicitante = medicoSolicitante;
     this.medicoExecutor = medicoExecutor;
     this.procedimento = procedimento;
+    this.todosProcedimentos = todosProcedimentos != null ? todosProcedimentos : new ArrayList<>();
     this.convenio = convenio;
     this.cid = cid;
     this.agendamento = agendamento;
@@ -219,7 +223,7 @@ public class PedidoCirurgico {
     }
   }
 
-  // ==================== MÉTODOS DE NEGÓCIO (existentes) ====================
+  // ==================== MÉTODOS DE NEGÓCIO ====================
 
   public void enviarParaAnalise(String usuario) {
     if (!status.getTipo().podeSerAtualizadoPara(StatusPedido.Tipo.PENDENTE)) {
@@ -584,6 +588,18 @@ public class PedidoCirurgico {
 
   public String getSexoPaciente() {
     return sexoPaciente;
+  }
+
+  // ==================== GETTER PARA TODOS PROCEDIMENTOS ====================
+
+  public List<Procedimento> getTodosProcedimentos() {
+    return todosProcedimentos != null ? Collections.unmodifiableList(todosProcedimentos) : Collections.emptyList();
+  }
+
+  // ==================== SETTER PARA TODOS PROCEDIMENTOS ====================
+
+  public void setTodosProcedimentos(List<Procedimento> todosProcedimentos) {
+    this.todosProcedimentos = todosProcedimentos != null ? new ArrayList<>(todosProcedimentos) : new ArrayList<>();
   }
 
   // ==================== MÉTODOS DE CONSULTA BOOLEANOS ====================

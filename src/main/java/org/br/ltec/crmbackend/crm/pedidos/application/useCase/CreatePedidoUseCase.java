@@ -19,16 +19,15 @@ public class CreatePedidoUseCase {
   private final PedidoRepository pedidoRepository;
   private final PacienteRepository pacienteRepository;
   private final CreatePacienteUseCase createPacienteUseCase;
-  private final PedidoBuilder pedidoBuilder;
+  // REMOVIDO: private final PedidoBuilder pedidoBuilder; - não é mais injetado
 
   public CreatePedidoUseCase(PedidoRepository pedidoRepository,
                              PacienteRepository pacienteRepository,
-                             CreatePacienteUseCase createPacienteUseCase,
-                             PedidoBuilder pedidoBuilder) {
+                             CreatePacienteUseCase createPacienteUseCase) {
     this.pedidoRepository = pedidoRepository;
     this.pacienteRepository = pacienteRepository;
     this.createPacienteUseCase = createPacienteUseCase;
-    this.pedidoBuilder = pedidoBuilder;
+    // REMOVIDO: this.pedidoBuilder = pedidoBuilder;
   }
 
   public PedidoCirurgico execute(CreatePedidoCommand command) {
@@ -74,11 +73,11 @@ public class CreatePedidoUseCase {
       }
 
       // PROCEDIMENTO - Usar a descrição do procedimento (não a indicação clínica)
-      Procedimento procedimento = new Procedimento(
-              command.getProcedimentoCodigoTUSS(),
-              command.getProcedimentoDescricao(),
-              command.getProcedimentoCategoria()
-      );
+      if (command.getProcedimentos() == null || command.getProcedimentos().isEmpty()) {
+        throw new IllegalArgumentException("Pelo menos um procedimento é obrigatório");
+      }
+      var todosProcedimentos = command.getProcedimentos();
+      Procedimento procedimentoPrincipal = command.getProcedimentos().get(0);
 
       // Convênio
       Convenio convenio = new Convenio(
@@ -116,14 +115,17 @@ public class CreatePedidoUseCase {
               command.getLateralidade() :
               new Lateralidade(Lateralidade.Tipo.NAO_APLICAVEL);
 
+      // ✅ Cria uma NOVA instância do builder a cada requisição
+      PedidoBuilder pedidoBuilder = new PedidoBuilder();
+
       // Usar o builder com todos os métodos individuais
-// Usar o builder com todos os métodos individuais
       PedidoCirurgico pedido = pedidoBuilder
               .comId(pedidoId)
               .comPacienteId(pacienteId)
               .comMedicoSolicitante(medicoSolicitante)
               .comMedicoExecutor(medicoExecutor)
-              .comProcedimento(procedimento)
+              .comProcedimento(procedimentoPrincipal)
+              .comTodosProcedimentos(todosProcedimentos)
               .comConvenio(convenio)
               .comCid(cid)
               .comAgendamento(agendamento)
@@ -140,7 +142,7 @@ public class CreatePedidoUseCase {
               .comRelatorioPreOperatorio(command.getRelatorioPreOperatorio())
               .comOrientacoes(command.getOrientacoes())
 
-              // 🔥 CIDs secundários - CORRIGIDO: usar o método existente
+              // 🔥 CIDs secundários
               .comCidsSecundarios(
                       command.getCidCodigo2(),
                       command.getCidCodigo3(),
@@ -167,6 +169,15 @@ public class CreatePedidoUseCase {
               .comEmailPaciente(command.getEmailPaciente())
               .comSexoPaciente(command.getSexoPaciente())
               .build();
+
+      System.out.println("=== ANTES DE SALVAR ===");
+      System.out.println("Procedimentos no pedido: " +
+              (pedido.getTodosProcedimentos() != null ? pedido.getTodosProcedimentos().size() : "null"));
+      if (pedido.getTodosProcedimentos() != null) {
+        for (Procedimento p : pedido.getTodosProcedimentos()) {
+          System.out.println("  - " + p.getCodigoTUSS() + ": " + p.getDescricao());
+        }
+      }
 
       return pedidoRepository.salvar(pedido);
 

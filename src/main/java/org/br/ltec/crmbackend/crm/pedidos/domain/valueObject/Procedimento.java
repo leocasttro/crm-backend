@@ -1,63 +1,27 @@
 package org.br.ltec.crmbackend.crm.pedidos.domain.valueObject;
 
-import java.util.Objects;
-
 public class Procedimento {
-  private final String codigoTUSS;
-  private final String descricao;
-  private final String categoria;
+  private String codigoTUSS;
+  private String descricao;
+  private String categoria;
+
+  // Construtor padrão OBRIGATÓRIO
+  public Procedimento() {
+  }
 
   public Procedimento(String codigoTUSS, String descricao, String categoria) {
-    validar(codigoTUSS, descricao);
-    this.codigoTUSS = codigoTUSS.trim();
-    this.descricao = descricao.trim();
-    this.categoria = categoria != null ? categoria.trim() : "";
+    this.codigoTUSS = codigoTUSS;
+    this.descricao = descricao;
+    this.categoria = categoria;
   }
 
-  private void validar(String codigoTUSS, String descricao) {
-    if (descricao == null || descricao.trim().isEmpty()) {
-      throw new IllegalArgumentException("Descrição do procedimento é obrigatória");
-    }
-    if (descricao.trim().length() < 5 || descricao.trim().length() > 6000) {
-      throw new IllegalArgumentException("Descrição deve ter entre 5 e 200 caracteres");
-    }
-  }
+  // Getters e setters
+  public String getCodigoTUSS() { return codigoTUSS; }
+  public void setCodigoTUSS(String codigoTUSS) { this.codigoTUSS = codigoTUSS; }
 
-  public String getCodigoTUSS() {
-    return codigoTUSS;
-  }
+  public String getDescricao() { return descricao; }
+  public void setDescricao(String descricao) { this.descricao = descricao; }
 
-  public String getDescricao() {
-    return descricao;
-  }
-
-  public String getCategoria() {
-    return categoria;
-  }
-
-  public String getCodigoFormatado() {
-    return codigoTUSS;
-  }
-
-  public String getDescricaoCompleta() {
-    return codigoTUSS + " - " + descricao + (categoria.isEmpty() ? "" : " (" + categoria + ")");
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Procedimento that = (Procedimento) o;
-    return Objects.equals(codigoTUSS, that.codigoTUSS);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(codigoTUSS);
-  }
-
-  @Override
-  public String toString() {
-    return getDescricaoCompleta();
-  }
+  public String getCategoria() { return categoria; }
+  public void setCategoria(String categoria) { this.categoria = categoria; }
 }

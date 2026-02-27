@@ -3,10 +3,12 @@ package org.br.ltec.crmbackend.crm.pedidos.application.command;
 import org.br.ltec.crmbackend.crm.paciente.application.command.CreatePacienteCommand;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Lateralidade;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Prioridade;
+import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Procedimento;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.StatusPedido;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CreatePedidoCommand {
@@ -14,42 +16,35 @@ public class CreatePedidoCommand {
   private String pacienteId;
   private String usuarioCriacao;
 
-  // Médico Solicitante
   private String medicoSolicitanteNome;
   private String medicoSolicitanteCrm;
   private String medicoSolicitanteEspecialidade;
 
-  // Médico Executor (opcional)
   private String medicoExecutorNome;
   private String medicoExecutorCrm;
   private String medicoExecutorEspecialidade;
 
-  // Procedimento
   private String procedimentoCodigoTUSS;
   private String procedimentoDescricao;
   private String procedimentoCategoria;
+  private List<Procedimento> procedimentos = new ArrayList<>();
 
-  // 🔥 NOVOS CAMPOS CLÍNICOS
   private String indicacaoClinica;
   private String relatorioPreOperatorio;
   private String orientacoes;
 
-  // Convênio
   private String convenioNome;
   private String convenioNumeroCarteira;
   private LocalDate convenioValidadeCarteira;
   private String convenioTipoPlano;
 
-  // CID (opcional)
   private String cidCodigo;
   private String cidDescricao;
 
-  // 🔥 CIDs Secundários
   private String cidCodigo2;
   private String cidCodigo3;
   private String cidCodigo4;
 
-  // 🔥 Dados da Guia/Internação
   private String numeroGuia;
   private String registroAns;
   private String numeroGuiaOperadora;
@@ -60,32 +55,26 @@ public class CreatePedidoCommand {
   private String regimeInternacao;
   private String qtdDiariasSolicitadas;
 
-  // 🔥 Dados de Contato do Paciente
   private String telefonePaciente;
   private String enderecoPaciente;
   private String cpfPaciente;
   private String emailPaciente;
   private String sexoPaciente;
 
-  // Agendamento (opcional)
   private LocalDateTime agendamentoDataHora;
   private String agendamentoSala;
   private Integer agendamentoDuracaoEstimada;
   private String agendamentoObservacoes;
 
-  // Status e prioridade
   private StatusPedido.Tipo status;
   private Prioridade prioridade;
   private Lateralidade lateralidade;
 
-  // Data do pedido
   private LocalDate dataPedido;
 
-  // Observações e documentos
   private List<String> observacoes;
   private List<String> documentosAnexados;
 
-  // Construtor
   public CreatePedidoCommand() {
     this.status = StatusPedido.Tipo.PENDENTE;
     this.dataPedido = LocalDate.now();
@@ -93,7 +82,6 @@ public class CreatePedidoCommand {
 
   // ==================== GETTERS E SETTERS ====================
 
-  // Campos existentes
   public String getPacienteId() { return pacienteId; }
   public void setPacienteId(String pacienteId) { this.pacienteId = pacienteId; }
 
@@ -127,7 +115,14 @@ public class CreatePedidoCommand {
   public String getProcedimentoCategoria() { return procedimentoCategoria; }
   public void setProcedimentoCategoria(String procedimentoCategoria) { this.procedimentoCategoria = procedimentoCategoria; }
 
-  // 🔥 NOVOS GETTERS/SETTERS CLÍNICOS
+  public List<Procedimento> getProcedimentos() {
+    return procedimentos;
+  }
+
+  public void setProcedimentos(List<Procedimento> procedimentos) {
+    this.procedimentos = procedimentos;
+  }
+
   public String getIndicacaoClinica() { return indicacaoClinica; }
   public void setIndicacaoClinica(String indicacaoClinica) { this.indicacaoClinica = indicacaoClinica; }
 
@@ -137,7 +132,6 @@ public class CreatePedidoCommand {
   public String getOrientacoes() { return orientacoes; }
   public void setOrientacoes(String orientacoes) { this.orientacoes = orientacoes; }
 
-  // Convênio
   public String getConvenioNome() { return convenioNome; }
   public void setConvenioNome(String convenioNome) { this.convenioNome = convenioNome; }
 
@@ -150,14 +144,12 @@ public class CreatePedidoCommand {
   public String getConvenioTipoPlano() { return convenioTipoPlano; }
   public void setConvenioTipoPlano(String convenioTipoPlano) { this.convenioTipoPlano = convenioTipoPlano; }
 
-  // CID
   public String getCidCodigo() { return cidCodigo; }
   public void setCidCodigo(String cidCodigo) { this.cidCodigo = cidCodigo; }
 
   public String getCidDescricao() { return cidDescricao; }
   public void setCidDescricao(String cidDescricao) { this.cidDescricao = cidDescricao; }
 
-  // 🔥 CIDs Secundários
   public String getCidCodigo2() { return cidCodigo2; }
   public void setCidCodigo2(String cidCodigo2) { this.cidCodigo2 = cidCodigo2; }
 
@@ -167,7 +159,6 @@ public class CreatePedidoCommand {
   public String getCidCodigo4() { return cidCodigo4; }
   public void setCidCodigo4(String cidCodigo4) { this.cidCodigo4 = cidCodigo4; }
 
-  // 🔥 Dados da Guia
   public String getNumeroGuia() { return numeroGuia; }
   public void setNumeroGuia(String numeroGuia) { this.numeroGuia = numeroGuia; }
 
@@ -183,7 +174,6 @@ public class CreatePedidoCommand {
   public String getNomeContratado() { return nomeContratado; }
   public void setNomeContratado(String nomeContratado) { this.nomeContratado = nomeContratado; }
 
-  // 🔥 Dados da Internação
   public String getCaraterAtendimento() { return caraterAtendimento; }
   public void setCaraterAtendimento(String caraterAtendimento) { this.caraterAtendimento = caraterAtendimento; }
 
@@ -196,7 +186,6 @@ public class CreatePedidoCommand {
   public String getQtdDiariasSolicitadas() { return qtdDiariasSolicitadas; }
   public void setQtdDiariasSolicitadas(String qtdDiariasSolicitadas) { this.qtdDiariasSolicitadas = qtdDiariasSolicitadas; }
 
-  // 🔥 Dados de Contato do Paciente
   public String getTelefonePaciente() { return telefonePaciente; }
   public void setTelefonePaciente(String telefonePaciente) { this.telefonePaciente = telefonePaciente; }
 
@@ -212,7 +201,6 @@ public class CreatePedidoCommand {
   public String getSexoPaciente() { return sexoPaciente; }
   public void setSexoPaciente(String sexoPaciente) { this.sexoPaciente = sexoPaciente; }
 
-  // Agendamento
   public LocalDateTime getAgendamentoDataHora() { return agendamentoDataHora; }
   public void setAgendamentoDataHora(LocalDateTime agendamentoDataHora) { this.agendamentoDataHora = agendamentoDataHora; }
 
@@ -225,7 +213,6 @@ public class CreatePedidoCommand {
   public String getAgendamentoObservacoes() { return agendamentoObservacoes; }
   public void setAgendamentoObservacoes(String agendamentoObservacoes) { this.agendamentoObservacoes = agendamentoObservacoes; }
 
-  // Status e prioridade
   public StatusPedido.Tipo getStatus() { return status; }
   public void setStatus(StatusPedido.Tipo status) { this.status = status; }
 

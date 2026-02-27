@@ -2,14 +2,14 @@ package org.br.ltec.crmbackend.crm.pedidos.domain.model;
 
 import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.*;
-import org.springframework.stereotype.Component;
+// import org.springframework.stereotype.Component; // REMOVIDO - não é mais Component
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+// @Component REMOVIDO - será instanciado manualmente
 public class PedidoBuilder {
 
   private PedidoId id;
@@ -17,6 +17,7 @@ public class PedidoBuilder {
   private Medico medicoSolicitante;
   private Medico medicoExecutor;
   private Procedimento procedimento;
+  private List<Procedimento> todosProcedimentos = new ArrayList<>();
   private Convenio convenio;
   private CID cid;
   private DataHoraAgendamento agendamento;
@@ -54,12 +55,10 @@ public class PedidoBuilder {
   private String sexoPaciente;
 
   public PedidoBuilder() {
-    this.observacoes = new ArrayList<>();
-    this.documentosAnexados = new ArrayList<>();
-    this.status = new StatusPedido(StatusPedido.Tipo.RASCUNHO);
-    this.lateralidade = new Lateralidade(Lateralidade.Tipo.NAO_APLICAVEL);
-    this.dataPedido = LocalDate.now();
+    reset(); // Chama reset no construtor para inicializar tudo
   }
+
+  // ==================== MÉTODOS DO BUILDER ====================
 
   public PedidoBuilder comId(PedidoId id) {
     this.id = id;
@@ -86,6 +85,11 @@ public class PedidoBuilder {
     return this;
   }
 
+  public PedidoBuilder comTodosProcedimentos(List<Procedimento> procedimentos) {
+    this.todosProcedimentos = procedimentos != null ? new ArrayList<>(procedimentos) : new ArrayList<>();
+    return this;
+  }
+
   public PedidoBuilder comConvenio(Convenio convenio) {
     this.convenio = convenio;
     return this;
@@ -96,7 +100,6 @@ public class PedidoBuilder {
     return this;
   }
 
-  // 🔥 NOVO: Método para CIDs secundários
   public PedidoBuilder comCidsSecundarios(String cid2, String cid3, String cid4) {
     this.cidCodigo2 = cid2;
     this.cidCodigo3 = cid3;
@@ -152,7 +155,6 @@ public class PedidoBuilder {
     return this;
   }
 
-  // 🔥 NOVOS MÉTODOS PARA DADOS CLÍNICOS
   public PedidoBuilder comIndicacaoClinica(String indicacaoClinica) {
     this.indicacaoClinica = indicacaoClinica;
     return this;
@@ -168,7 +170,6 @@ public class PedidoBuilder {
     return this;
   }
 
-  // 🔥 NOVOS MÉTODOS PARA DADOS DO PACIENTE
   public PedidoBuilder comTelefonePaciente(String telefonePaciente) {
     this.telefonePaciente = telefonePaciente;
     return this;
@@ -194,7 +195,6 @@ public class PedidoBuilder {
     return this;
   }
 
-  // 🔥 NOVOS MÉTODOS PARA DADOS DA GUIA
   public PedidoBuilder comNumeroGuia(String numeroGuia) {
     this.numeroGuia = numeroGuia;
     return this;
@@ -220,7 +220,6 @@ public class PedidoBuilder {
     return this;
   }
 
-  // 🔥 NOVOS MÉTODOS PARA DADOS DA INTERNAÇÃO
   public PedidoBuilder comCaraterAtendimento(String caraterAtendimento) {
     this.caraterAtendimento = caraterAtendimento;
     return this;
@@ -266,6 +265,54 @@ public class PedidoBuilder {
     return this;
   }
 
+  // ==================== MÉTODO RESET ====================
+
+  public void reset() {
+    this.id = null;
+    this.pacienteId = null;
+    this.medicoSolicitante = null;
+    this.medicoExecutor = null;
+    this.procedimento = null;
+    this.todosProcedimentos = new ArrayList<>();
+    this.convenio = null;
+    this.cid = null;
+    this.agendamento = null;
+    this.status = new StatusPedido(StatusPedido.Tipo.RASCUNHO);
+    this.prioridade = null;
+    this.lateralidade = new Lateralidade(Lateralidade.Tipo.NAO_APLICAVEL);
+    this.observacoes = new ArrayList<>();
+    this.documentosAnexados = new ArrayList<>();
+    this.criadoEm = null;
+    this.atualizadoEm = null;
+    this.usuarioCriacao = null;
+    this.usuarioAtualizacao = null;
+    this.dataPedido = LocalDate.now();
+
+    // Reset dos novos campos
+    this.indicacaoClinica = null;
+    this.relatorioPreOperatorio = null;
+    this.orientacoes = null;
+    this.telefonePaciente = null;
+    this.enderecoPaciente = null;
+    this.cidCodigo2 = null;
+    this.cidCodigo3 = null;
+    this.cidCodigo4 = null;
+    this.numeroGuia = null;
+    this.registroAns = null;
+    this.numeroGuiaOperadora = null;
+    this.codigoOperadora = null;
+    this.nomeContratado = null;
+    this.caraterAtendimento = null;
+    this.tipoInternacao = null;
+    this.regimeInternacao = null;
+    this.qtdDiariasSolicitadas = null;
+    this.cpfPaciente = null;
+    this.emailPaciente = null;
+    this.sexoPaciente = null;
+  }
+
+  // ==================== MÉTODO BUILD ====================
+
   public PedidoCirurgico build() {
     if (this.id == null) {
       this.id = PedidoId.generate();
@@ -274,12 +321,14 @@ public class PedidoBuilder {
       this.criadoEm = LocalDateTime.now();
     }
 
-    return new PedidoCirurgico(
+
+    PedidoCirurgico pedido = new PedidoCirurgico(
             id,
             pacienteId,
             medicoSolicitante,
             medicoExecutor,
             procedimento,
+            todosProcedimentos,  // ← AGORA O CONSTRUTOR TEM QUE TER ESTE PARÂMETRO!
             convenio,
             cid,
             agendamento,
@@ -293,8 +342,6 @@ public class PedidoBuilder {
             usuarioCriacao,
             usuarioAtualizacao,
             dataPedido,
-
-            // 🔥 NOVOS CAMPOS
             indicacaoClinica,
             relatorioPreOperatorio,
             orientacoes,
@@ -316,5 +363,10 @@ public class PedidoBuilder {
             emailPaciente,
             sexoPaciente
     );
+
+    // Auto-reset após build (opcional, mas recomendado)
+    // this.reset();
+
+    return pedido;
   }
 }
