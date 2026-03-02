@@ -416,11 +416,6 @@ public class PedidoCirurgico {
 
   // ==================== MÉTODOS DE CONSULTA ====================
 
-  public boolean podeSerEditado() {
-    return status.getTipo() == StatusPedido.Tipo.RASCUNHO ||
-            status.getTipo() == StatusPedido.Tipo.PENDENTE;
-  }
-
   public boolean podeSerCancelado() {
     return !status.getTipo().isFinal() &&
             status.getTipo() != StatusPedido.Tipo.REALIZADO;
@@ -648,6 +643,29 @@ public class PedidoCirurgico {
     return numeroGuia != null || registroAns != null || numeroGuiaOperadora != null;
   }
 
+  public StatusPedido.Tipo analisar(boolean aprovado, String motivoRejeicao) {
+    if (status.getTipo() != StatusPedido.Tipo.EM_ANALISE) {
+      throw new IllegalStateException(
+              String.format("Pedido não está em análise. Status atual: %s", status.getTipo())
+      );
+    }
+
+    if (aprovado) {
+      return StatusPedido.Tipo.EM_ANALISE; // Mantém o mesmo status
+    } else {
+      if (motivoRejeicao == null || motivoRejeicao.trim().isEmpty()) {
+        throw new IllegalArgumentException("Motivo da reprovação é obrigatório");
+      }
+      return StatusPedido.Tipo.REJEITADO;
+    }
+  }
+
+  public boolean podeSerEditado() {
+    return status.getTipo() == StatusPedido.Tipo.EM_ANALISE ||
+            status.getTipo() == StatusPedido.Tipo.REJEITADO ||
+            status.getTipo() == StatusPedido.Tipo.RASCUNHO ||
+            status.getTipo() == StatusPedido.Tipo.PENDENTE;
+  }
   // ==================== EQUALS, HASHCODE, TOSTRING ====================
 
   @Override

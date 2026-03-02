@@ -1,5 +1,6 @@
 package org.br.ltec.crmbackend.crm.pedidos.infra.pdf;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -7,7 +8,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 
+import net.sourceforge.tess4j.Tesseract;
+import net.sourceforge.tess4j.TesseractException;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.br.ltec.crmbackend.crm.pedidos.application.useCase.PedidoExtraido;
 import org.br.ltec.crmbackend.crm.pedidos.domain.port.PedidoPdfExtractor;
@@ -25,7 +29,31 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
     }
 
     String rawText = extractText(pdfBytes);
+
+    // ============ DEBUG DO TEXTO BRUTO ============
+    System.out.println("=== TEXTO BRUTO (rawText) ===");
+    System.out.println("Tamanho: " + rawText.length() + " caracteres");
+    System.out.println("Primeiros 500 caracteres:");
+    System.out.println(rawText.substring(0, Math.min(500, rawText.length())));
+    System.out.println("==============================");
+
     String text = normalizer.normalize(rawText);
+
+    // ============ DEBUG DO TEXTO NORMALIZADO ============
+    System.out.println("=== TEXTO NORMALIZADO ===");
+    System.out.println("Tamanho: " + text.length() + " caracteres");
+    System.out.println("Primeiros 500 caracteres:");
+    System.out.println(text.substring(0, Math.min(500, text.length())));
+    System.out.println("=========================");
+
+    // ============ DEBUG DOS PADRÕES ============
+    System.out.println("=== VERIFICANDO PADRÕES ===");
+
+    testarPadrao(text, PedidoPdfPatterns.NOME_PACIENTE, "NOME_PACIENTE");
+    testarPadrao(text, PedidoPdfPatterns.DATA_PEDIDO, "DATA_PEDIDO");
+    testarPadrao(text, PedidoPdfPatterns.CID_PRINCIPAL, "CID_PRINCIPAL");
+    testarPadrao(text, PedidoPdfPatterns.PROCEDIMENTO_OPME, "PROCEDIMENTO_OPME");
+    testarPadrao(text, PedidoPdfPatterns.RELATORIO_PRE_OPERATORIO, "RELATORIO_PRE_OPERATORIO");
 
     PedidoExtraido extraido = new PedidoExtraido();
 
@@ -170,9 +198,28 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
 
   private String extractText(byte[] pdfBytes) {
     try (PDDocument doc = PDDocument.load(new ByteArrayInputStream(pdfBytes))) {
+      // Primeiro tenta extrair texto normal
       PDFTextStripper stripper = new PDFTextStripper();
       stripper.setSortByPosition(true);
-      return stripper.getText(doc);
+      stripper.setStartPage(1);
+      stripper.setEndPage(doc.getNumberOfPages());
+
+      stripper.setParagraphStart("/t");
+      stripper.setWordSeparator(" ");
+      stripper.setLineSeparator("\n");
+
+      String text = stripper.getText(doc);
+
+      System.out.println("Número de páginas: " + doc.getNumberOfPages());
+      System.out.println("Texto extraído (normal): " + text.length() + " caracteres");
+
+      // Se o texto for muito curto (menos de 100 caracteres), provavelmente é PDF scaneado
+      if (text.length() < 100) {
+        System.out.println("PDF parece ser scaneado. Tentando OCR...");
+        return extractTextWithOCR(pdfBytes);
+      }
+
+      return text;
     } catch (IOException e) {
       throw new RuntimeException("Falha ao ler PDF (PDFBox).", e);
     }
@@ -190,5 +237,68 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
     if (s == null) return null;
     String t = s.trim();
     return t.isBlank() ? null : t;
+  }
+
+  private void testarPadrao(String text, java.util.regex.Pattern pattern, String nomePadrao) {
+    java.util.regex.Matcher m = pattern.matcher(text);
+    System.out.print(nomePadrao + ": ");
+    if (m.find()) {
+      System.out.println("ENCONTRADO");
+      System.out.println("  Grupo 1: '" + m.group(1) + "'");
+      if (m.groupCount() > 1) {
+        for (int i = 2; i <= m.groupCount(); i++) {
+          System.out.println("  Grupo " + i + ": '" + m.group(i) + "'");
+        }
+      }
+    } else {
+      System.out.println("NÃO ENCONTRADO");
+
+      // Mostra o trecho onde deveria estar
+      if (nomePadrao.equals("NOME_PACIENTE")) {
+        int idx = text.indexOf("Paciente");
+        if (idx > 0) {
+          System.out.println("  Trecho com 'Paciente':");
+          System.out.println("  " + text.substring(Math.max(0, idx-20), Math.min(text.length(), idx+100)));
+        }
+      }
+    }
+  }
+
+  private String extractTextWithOCR(byte[] pdfBytes) {
+    try (PDDocument document = PDDocument.load(new ByteArrayInputStream(pdfBytes))) {
+      PDFRenderer pdfRenderer = new PDFRenderer(document);
+      StringBuilder text = new StringBuilder();
+
+      // Configurar o Tesseract
+      Tesseract tesseract = new Tesseract();
+
+      // Caminho correto para o tessdata (versão 5)
+      String tessdataPath = "/usr/share/tesseract-ocr/5/tessdata/";
+      System.out.println("Usando tessdata em: " + tessdataPath);
+
+      tesseract.setDatapath(tessdataPath);
+      tesseract.setLanguage("por"); // Português
+
+      // Configurações para melhorar a precisão
+      tesseract.setPageSegMode(6);
+      tesseract.setOcrEngineMode(1);
+
+      for (int page = 0; page < document.getNumberOfPages(); page++) {
+        System.out.println("Processando página " + (page + 1) + " com OCR...");
+
+        // Renderizar com alta resolução
+        BufferedImage bim = pdfRenderer.renderImageWithDPI(page, 300);
+
+        // Executar OCR
+        String pageText = tesseract.doOCR(bim);
+        text.append(pageText).append("\n");
+      }
+
+      System.out.println("OCR concluído. Texto extraído: " + text.length() + " caracteres");
+      return text.toString();
+
+    } catch (TesseractException | IOException e) {
+      throw new RuntimeException("Erro ao executar OCR no PDF: " + e.getMessage(), e);
+    }
   }
 }

@@ -82,17 +82,14 @@ public class PedidoExtraidoMapper {
       cmd.setProcedimentos(procedimentos);
     }
 
-    // 🔥 DADOS CLÍNICOS
-    cmd.setIndicacaoClinica(extraido.getIndicacaoClinica());
-    cmd.setRelatorioPreOperatorio(extraido.getRelatorioPreOperatorio());
-    cmd.setOrientacoes(extraido.getOrientacoes());
+    cmd.setIndicacaoClinica(limparIndicacaoClinica(extraido.getIndicacaoClinica()));
+    cmd.setRelatorioPreOperatorio(limparIndicacaoClinica(extraido.getRelatorioPreOperatorio()));
+    cmd.setOrientacoes(limparTextoOcr(extraido.getOrientacoes()));
 
-    // 📌 DATA DO PEDIDO
     if (extraido.getDataPedido() != null && !extraido.getDataPedido().isBlank()) {
       cmd.setDataPedido(LocalDate.parse(extraido.getDataPedido(), PDF_DATE));
     }
 
-    // 📌 PRIORIDADE
     if (extraido.getCaraterAtendimento() != null) {
       String carater = extraido.getCaraterAtendimento().toUpperCase();
       if (carater.contains("URG")) {
@@ -104,7 +101,6 @@ public class PedidoExtraidoMapper {
       cmd.setPrioridade(new Prioridade(Prioridade.Tipo.ELETIVA));
     }
 
-    // 📌 LATERALIDADE
     if (extraido.getLateralidade() != null) {
       cmd.setLateralidade(mapearLateralidade(extraido.getLateralidade()));
     } else {
@@ -113,27 +109,23 @@ public class PedidoExtraidoMapper {
               new Lateralidade(Lateralidade.Tipo.NAO_APLICAVEL));
     }
 
-    // 🔥 DADOS DA GUIA
     cmd.setNumeroGuia(extraido.getNumeroGuia());
     cmd.setRegistroAns(extraido.getRegistroAns());
     cmd.setNumeroGuiaOperadora(extraido.getNumeroGuiaOperadora());
     cmd.setCodigoOperadora(extraido.getCodigoOperadora());
     cmd.setNomeContratado(extraido.getNomeContratado());
 
-    // 🔥 DADOS DA INTERNAÇÃO
     cmd.setCaraterAtendimento(extraido.getCaraterAtendimento());
     cmd.setTipoInternacao(extraido.getTipoInternacao());
     cmd.setRegimeInternacao(extraido.getRegimeInternacao());
     cmd.setQtdDiariasSolicitadas(extraido.getQtdDiariasSolicitadas());
 
-    // 🔥 DADOS DE CONTATO DO PACIENTE
     cmd.setTelefonePaciente(extraido.getTelefone());
     cmd.setEnderecoPaciente(extraido.getEnderecoMedico());
     cmd.setCpfPaciente(extraido.getCpf());
     cmd.setEmailPaciente(extraido.getEmail());
     cmd.setSexoPaciente(extraido.getSexo());
 
-    // 📌 OBSERVAÇÕES
     List<String> observacoes = new ArrayList<>();
 
     if (extraido.getTextoNormalizado() != null && !extraido.getTextoNormalizado().isEmpty()) {
@@ -158,7 +150,6 @@ public class PedidoExtraidoMapper {
   private CreatePacienteCommand criarPacienteCommand(PedidoExtraido extraido) {
     CreatePacienteCommand pacienteCmd = new CreatePacienteCommand();
 
-    // 🔹 Nome completo
     String nomeCompleto = extraido.getNomePaciente();
     if (nomeCompleto != null && !nomeCompleto.isEmpty()) {
       String[] partes = nomeCompleto.split(" ", 2);
@@ -166,7 +157,6 @@ public class PedidoExtraidoMapper {
       pacienteCmd.setSobrenome(partes.length > 1 ? partes[1] : "");
     }
 
-    // 🔹 Data de nascimento
     String dataNascimentoStr = extraido.getDataNascimento();
     if (dataNascimentoStr != null && !dataNascimentoStr.isEmpty()) {
       try {
@@ -177,19 +167,16 @@ public class PedidoExtraidoMapper {
       }
     }
 
-    // 🔹 CPF
     String cpf = extraido.getCpf() != null ? extraido.getCpf() : extrairCpf(extraido.getTextoNormalizado());
     if (cpf != null) {
       pacienteCmd.setDocumentoNumero(cpf.replaceAll("[^0-9]", ""));
       pacienteCmd.setDocumentoTipo(Documento.TipoDocumento.CPF);
     }
 
-    // 🔹 Email
     if (extraido.getEmail() != null) {
       pacienteCmd.setEmail(extraido.getEmail());
     }
 
-    // 🔹 Telefone
     if (extraido.getTelefone() != null) {
       List<CreatePacienteCommand.TelefoneRequest> telefones = new ArrayList<>();
       telefones.add(new CreatePacienteCommand.TelefoneRequest(
@@ -200,7 +187,6 @@ public class PedidoExtraidoMapper {
       pacienteCmd.setTelefones(telefones);
     }
 
-    // 🔹 Sexo - CORRIGIDO
     if (extraido.getSexo() != null) {
       String sexoStr = extraido.getSexo().toUpperCase();
       if (sexoStr.contains("M") || sexoStr.equals("MASCULINO")) {
@@ -265,5 +251,50 @@ public class PedidoExtraidoMapper {
       return new Lateralidade(Lateralidade.Tipo.NAO_APLICAVEL);
     }
     return null;
+  }
+
+  private String limparTextoOcr(String texto) {
+    if (texto == null) return null;
+
+    // Remove marcadores /t
+    texto = texto.replaceAll("/t", " ");
+
+    // Remove padrões como "29 - CID 10 Principal", "30 - CID 10 (2)", etc.
+    texto = texto.replaceAll("\\d+\\s*-\\s*(?:CID|Tabela|Indicação).*?(?=\\s|$)", "");
+
+    // Remove números de campos (ex: /tN40 2)
+    texto = texto.replaceAll("\\s+\\d+\\s+", " ");
+
+    // Remove espaços extras
+    texto = texto.replaceAll("\\s+", " ").trim();
+
+    // Se for um texto longo, tentar encontrar o ponto final e cortar
+    int pontoFinal = texto.lastIndexOf(".");
+    if (pontoFinal > 0 && pontoFinal < texto.length() - 30) {
+      texto = texto.substring(0, pontoFinal + 1);
+    }
+
+    return texto;
+  }
+
+  private String limparIndicacaoClinica(String texto) {
+    if (texto == null) return null;
+
+    // Padrão para capturar apenas o texto do relatório (até começar os números de campos)
+    Pattern pattern = Pattern.compile(
+            "([A-ZÀ-Ú][A-ZÀ-Ú0-9\\s,.;:()\\-]{50,}?)(?=\\s*(?:/t\\d+|\\d+\\s*-\\s*CID|/t\\d+\\s*-|$))",
+            Pattern.MULTILINE | Pattern.CASE_INSENSITIVE
+    );
+
+    Matcher matcher = pattern.matcher(texto);
+    if (matcher.find()) {
+      texto = matcher.group(1);
+    }
+
+    // Limpeza adicional
+    texto = texto.replaceAll("/t", " ");
+    texto = texto.replaceAll("\\s+", " ").trim();
+
+    return texto;
   }
 }

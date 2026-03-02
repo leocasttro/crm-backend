@@ -1,5 +1,6 @@
 package org.br.ltec.crmbackend.crm.auth.infra.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,22 +41,31 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     jwt = authHeader.substring(7);
-    userEmail = jwtService.extractUsername(jwt);
 
-    if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-      UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+    try {
+      userEmail = jwtService.extractUsername(jwt);
 
-      if (jwtService.isTokenValid(jwt, userDetails)) {
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                userDetails,
-                null,
-                userDetails.getAuthorities()
-        );
-        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+      if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+
+        if (jwtService.isTokenValid(jwt, userDetails)) {
+          UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                  userDetails,
+                  null,
+                  userDetails.getAuthorities()
+          );
+          authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+          SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
       }
-    }
 
-    filterChain.doFilter(request, response);
+      filterChain.doFilter(request, response);
+
+    } catch (ExpiredJwtException e) {
+      // Token expirado - retorna 401 sem corpo (frontend já trata)
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      response.setContentType("application/json");
+      response.getWriter().write("{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Token expirado\",\"code\":\"TOKEN_EXPIRED\"}");
+    }
   }
 }
