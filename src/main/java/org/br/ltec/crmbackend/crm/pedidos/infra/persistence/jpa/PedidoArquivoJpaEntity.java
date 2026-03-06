@@ -12,8 +12,12 @@ public class PedidoArquivoJpaEntity {
   @Column(name = "id", nullable = false, updatable = false)
   private UUID id;
 
-  @Column(name = "pedido_id", nullable = false, unique = true)
+  @Column(name = "pedido_id", nullable = false)  // Remove o unique = true
   private UUID pedidoId;
+
+  // ADICIONE ESTE CAMPO
+  @Column(name = "checklist_item_id")
+  private Long checklistItemId;
 
   @Column(name = "caminho", nullable = false, length = 1024)
   private String caminho;
@@ -41,67 +45,32 @@ public class PedidoArquivoJpaEntity {
     if (this.criadoEm == null) this.criadoEm = LocalDateTime.now();
   }
 
-  public UUID getId() {
-    return id;
-  }
+  // GETTERS E SETTERS
+  public UUID getId() { return id; }
+  public void setId(UUID id) { this.id = id; }
 
-  public void setId(UUID id) {
-    this.id = id;
-  }
+  public UUID getPedidoId() { return pedidoId; }
+  public void setPedidoId(UUID pedidoId) { this.pedidoId = pedidoId; }
 
-  public UUID getPedidoId() {
-    return pedidoId;
-  }
+  // ADICIONE GETTER E SETTER PARA checklistItemId
+  public Long getChecklistItemId() { return checklistItemId; }
+  public void setChecklistItemId(Long checklistItemId) { this.checklistItemId = checklistItemId; }
 
-  public void setPedidoId(UUID pedidoId) {
-    this.pedidoId = pedidoId;
-  }
+  public String getCaminho() { return caminho; }
+  public void setCaminho(String caminho) { this.caminho = caminho; }
 
-  public String getCaminho() {
-    return caminho;
-  }
+  public String getNomeOriginal() { return nomeOriginal; }
+  public void setNomeOriginal(String nomeOriginal) { this.nomeOriginal = nomeOriginal; }
 
-  public void setCaminho(String caminho) {
-    this.caminho = caminho;
-  }
+  public String getContentType() { return contentType; }
+  public void setContentType(String contentType) { this.contentType = contentType; }
 
-  public String getNomeOriginal() {
-    return nomeOriginal;
-  }
+  public long getTamanhoBytes() { return tamanhoBytes; }
+  public void setTamanhoBytes(long tamanhoBytes) { this.tamanhoBytes = tamanhoBytes; }
 
-  public void setNomeOriginal(String nomeOriginal) {
-    this.nomeOriginal = nomeOriginal;
-  }
+  public String getSha256() { return sha256; }
+  public void setSha256(String sha256) { this.sha256 = sha256; }
 
-  public String getContentType() {
-    return contentType;
-  }
-
-  public void setContentType(String contentType) {
-    this.contentType = contentType;
-  }
-
-  public long getTamanhoBytes() {
-    return tamanhoBytes;
-  }
-
-  public void setTamanhoBytes(long tamanhoBytes) {
-    this.tamanhoBytes = tamanhoBytes;
-  }
-
-  public String getSha256() {
-    return sha256;
-  }
-
-  public void setSha256(String sha256) {
-    this.sha256 = sha256;
-  }
-
-  public LocalDateTime getCriadoEm() {
-    return criadoEm;
-  }
-
-  public void setCriadoEm(LocalDateTime criadoEm) {
-    this.criadoEm = criadoEm;
-  }
+  public LocalDateTime getCriadoEm() { return criadoEm; }
+  public void setCriadoEm(LocalDateTime criadoEm) { this.criadoEm = criadoEm; }
 }

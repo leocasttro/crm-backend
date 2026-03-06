@@ -27,6 +27,7 @@ public class PedidoArquivoJpaMapper {
 
     UUID id = e.getId();
     UUID pedidoId = e.getPedidoId();
+    Long checklistItemId = e.getChecklistItemId();
 
     return new PedidoArquivoRepository.PedidoArquivoSalvo(
             id,
@@ -35,7 +36,8 @@ public class PedidoArquivoJpaMapper {
             e.getContentType(),
             e.getTamanhoBytes(),
             e.getSha256(),
-            e.getCaminho()
+            e.getCaminho(),
+            checklistItemId
     );
   }
 }

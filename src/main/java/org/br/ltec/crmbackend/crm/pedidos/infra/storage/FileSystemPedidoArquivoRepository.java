@@ -7,8 +7,11 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.br.ltec.crmbackend.crm.pedidos.domain.port.PedidoArquivoRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,21 +29,20 @@ public class FileSystemPedidoArquivoRepository implements PedidoArquivoRepositor
     ensureDirExists(this.baseDir);
   }
 
+  // ==================== MÉTODO PRINCIPAL ====================
+
   @Override
-  public PedidoArquivoSalvo salvar(UUID pedidoId, ArquivoUpload upload) {
+  public PedidoArquivoSalvo salvar(UUID pedidoId, ArquivoUpload upload, Long checklistItemId) {
     validateUpload(upload);
 
-    // Pasta do pedido: <base>/<pedidoId>/
     Path pedidoDir = baseDir.resolve(pedidoId.toString()).normalize();
     ensureDirExists(pedidoDir);
 
-    // Nome do arquivo (evita colisão e path traversal)
     String extension = guessExtension(upload.contentType(), upload.nomeOriginal());
     String fileName = UUID.randomUUID() + extension;
 
     Path targetFile = pedidoDir.resolve(fileName).normalize();
 
-    // Segurança extra: garante que o arquivo está dentro do baseDir
     if (!targetFile.startsWith(pedidoDir)) {
       throw new IllegalArgumentException("Caminho de arquivo inválido.");
     }
@@ -54,8 +56,6 @@ public class FileSystemPedidoArquivoRepository implements PedidoArquivoRepositor
     String sha256 = sha256Hex(upload.bytes());
     long size = upload.bytes().length;
 
-    // id aqui é o id do "registro do arquivo".
-    // Como filesystem não gera id, usamos UUID (você pode trocar depois se salvar metadados no banco).
     UUID arquivoId = UUID.randomUUID();
 
     return new PedidoArquivoSalvo(
@@ -65,17 +65,158 @@ public class FileSystemPedidoArquivoRepository implements PedidoArquivoRepositor
             upload.contentType(),
             size,
             sha256,
-            targetFile.toString()
+            targetFile.toString(),
+            checklistItemId
     );
   }
 
+  // ==================== MÉTODOS DA INTERFACE (CORRIGIDOS) ====================
+
   @Override
   public Optional<PedidoArquivoSalvo> buscarPedidoId(UUID pedidoId) {
+    Path pedidoDir = baseDir.resolve(pedidoId.toString()).normalize();
+
+    if (!Files.exists(pedidoDir)) {
+      return Optional.empty();
+    }
+
+    try (Stream<Path> files = Files.list(pedidoDir)) {
+      return files
+              .filter(Files::isRegularFile)
+              .findFirst()
+              .map(this::criarPedidoArquivoSalvoFromPath);
+    } catch (IOException e) {
+      throw new RuntimeException("Erro ao listar arquivos do pedido", e);
+    }
+  }
+
+  @Override
+  public boolean existeArquivoParaItem(UUID pedidoId, Long checklistItemId) {
+    // Delega para o JPA - este método não deve ser usado diretamente no FileSystem
+    return false;
+  }
+
+  @Override
+  public Optional<PedidoArquivoSalvo> buscarPorPedidoEItem(UUID pedidoId, Long checklistItemId) {
+    // Delega para o JPA - este método não deve ser usado diretamente no FileSystem
     return Optional.empty();
   }
 
+  @Override
+  public List<PedidoArquivoSalvo> listarPorPedido(UUID pedidoId) {
+    Path pedidoDir = baseDir.resolve(pedidoId.toString()).normalize();
 
-  // ----------------- helpers -----------------
+    if (!Files.exists(pedidoDir)) {
+      return List.of();
+    }
+
+    try (Stream<Path> files = Files.list(pedidoDir)) {
+      return files
+              .filter(Files::isRegularFile)
+              .map(this::criarPedidoArquivoSalvoFromPath)
+              .collect(Collectors.toList());
+    } catch (IOException e) {
+      throw new RuntimeException("Erro ao listar arquivos do pedido", e);
+    }
+  }
+
+  @Override
+  public void removerPorPedidoEItem(UUID pedidoId, Long checklistItemId) {
+    Path pedidoDir = baseDir.resolve(pedidoId.toString()).normalize();
+
+    if (!Files.exists(pedidoDir)) {
+      return;
+    }
+
+    try (Stream<Path> files = Files.list(pedidoDir)) {
+      files.filter(Files::isRegularFile)
+              .forEach(path -> {
+                try {
+                  Files.delete(path);
+                } catch (IOException e) {
+                  throw new RuntimeException("Erro ao deletar arquivo: " + path, e);
+                }
+              });
+    } catch (IOException e) {
+      throw new RuntimeException("Erro ao remover arquivos do pedido", e);
+    }
+  }
+
+  // ==================== MÉTODOS AUXILIARES ====================
+
+  private PedidoArquivoSalvo criarPedidoArquivoSalvoFromPath(Path path) {
+    try {
+      byte[] content = Files.readAllBytes(path);
+      String sha256 = sha256Hex(content);
+      String fileName = path.getFileName().toString();
+
+      // Tenta extrair o ID do nome do arquivo (primeira parte antes do .)
+      UUID arquivoId = UUID.randomUUID(); // fallback
+      try {
+        String uuidPart = fileName.substring(0, fileName.indexOf('.'));
+        arquivoId = UUID.fromString(uuidPart);
+      } catch (Exception e) {
+        // Ignora, usa random
+      }
+
+      return new PedidoArquivoSalvo(
+              arquivoId,
+              UUID.fromString(path.getParent().getFileName().toString()),
+              fileName,
+              guessContentType(fileName),
+              content.length,
+              sha256,
+              path.toString(),
+              null // FileSystem não tem checklistItemId
+      );
+    } catch (IOException e) {
+      throw new RuntimeException("Erro ao ler arquivo: " + path, e);
+    }
+  }
+
+  // ==================== MÉTODOS ADICIONAIS (NÃO DA INTERFACE) ====================
+
+  public Optional<PedidoArquivoSalvo> buscarPorId(UUID pedidoId, UUID arquivoId) {
+    Path pedidoDir = baseDir.resolve(pedidoId.toString()).normalize();
+
+    if (!Files.exists(pedidoDir)) {
+      return Optional.empty();
+    }
+
+    String fileNamePrefix = arquivoId.toString();
+
+    try (Stream<Path> files = Files.list(pedidoDir)) {
+      return files
+              .filter(Files::isRegularFile)
+              .filter(path -> path.getFileName().toString().startsWith(fileNamePrefix))
+              .findFirst()
+              .map(this::criarPedidoArquivoSalvoFromPath);
+    } catch (IOException e) {
+      throw new RuntimeException("Erro ao buscar arquivo por ID", e);
+    }
+  }
+
+  public byte[] carregarConteudo(UUID pedidoId, UUID arquivoId) {
+    Path pedidoDir = baseDir.resolve(pedidoId.toString()).normalize();
+    String fileNamePrefix = arquivoId.toString();
+
+    try (Stream<Path> files = Files.list(pedidoDir)) {
+      Optional<Path> arquivo = files
+              .filter(Files::isRegularFile)
+              .filter(path -> path.getFileName().toString().startsWith(fileNamePrefix))
+              .findFirst();
+
+      if (arquivo.isPresent()) {
+        return Files.readAllBytes(arquivo.get());
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Erro ao carregar conteúdo do arquivo", e);
+    }
+
+    return new byte[0];
+  }
+
+  // ==================== HELPERS (mantidos iguais) ====================
 
   private static void validateUpload(ArquivoUpload upload) {
     if (upload == null) throw new IllegalArgumentException("Upload é obrigatório.");
@@ -89,15 +230,12 @@ public class FileSystemPedidoArquivoRepository implements PedidoArquivoRepositor
       throw new IllegalArgumentException("Content-Type é obrigatório.");
     }
 
-    // Se você quiser restringir para PDF:
-    // Alguns browsers mandam application/pdf; outros podem mandar octet-stream.
     String ct = upload.contentType().toLowerCase();
     boolean looksPdf = ct.contains("pdf") || upload.nomeOriginal().toLowerCase().endsWith(".pdf");
     if (!looksPdf) {
       throw new IllegalArgumentException("Apenas arquivos PDF são permitidos.");
     }
 
-    // Limite simples (ex.: 10MB) – ajuste como quiser
     int maxBytes = 10 * 1024 * 1024;
     if (upload.bytes().length > maxBytes) {
       throw new IllegalArgumentException("Arquivo excede o tamanho máximo de 10MB.");
@@ -118,18 +256,14 @@ public class FileSystemPedidoArquivoRepository implements PedidoArquivoRepositor
       byte[] digest = md.digest(bytes);
       return HexFormat.of().formatHex(digest);
     } catch (NoSuchAlgorithmException e) {
-      // SHA-256 sempre existe na JVM padrão
       throw new RuntimeException("SHA-256 indisponível.", e);
     }
   }
 
   private static String safeName(String original) {
-    // só para armazenar no metadado (não usamos isso como path)
     String name = original.replace("\\", "/");
     int idx = name.lastIndexOf('/');
     name = (idx >= 0) ? name.substring(idx + 1) : name;
-
-    // remove caracteres estranhos
     name = name.replaceAll("[\\r\\n\\t]", " ").trim();
     if (name.isBlank()) return "arquivo.pdf";
     return name;
@@ -142,7 +276,25 @@ public class FileSystemPedidoArquivoRepository implements PedidoArquivoRepositor
     String ct = (contentType == null ? "" : contentType.toLowerCase());
     if (ct.contains("pdf")) return ".pdf";
 
-    // fallback
     return ".bin";
+  }
+
+  private static String guessContentType(String fileName) {
+    if (fileName.toLowerCase().endsWith(".pdf")) {
+      return "application/pdf";
+    }
+    return "application/octet-stream";
+  }
+
+  // No FileSystemPedidoArquivoRepository.java
+  public void removerPorCaminho(String caminho) {
+    try {
+      Path path = Paths.get(caminho);
+      if (Files.exists(path)) {
+        Files.delete(path);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Erro ao remover arquivo: " + caminho, e);
+    }
   }
 }

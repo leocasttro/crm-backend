@@ -274,7 +274,6 @@ public class PedidoController {
     ResultadoOperacao<PedidoCirurgico> resultado = iniciarAnaliseUseCase.execute(id, getUsuarioLogado());
 
     if (!resultado.isSucesso()) {
-      // ✅ CORRETO: passa apenas a mensagem (String)
       return ResponseEntity.badRequest()
               .body(ResultadoOperacao.erro(resultado.getMensagem()));
     }
