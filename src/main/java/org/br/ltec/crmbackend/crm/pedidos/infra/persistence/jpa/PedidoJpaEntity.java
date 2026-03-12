@@ -262,6 +262,15 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   @Column(name = "finalizado")
   private Boolean finalizado;
 
+  @Column(name = "consulta_pre_data_hora")
+  private LocalDateTime consultaPreDataHora;
+
+  @Column(name = "consulta_pre_cuidados", columnDefinition = "TEXT")
+  private String consultaPreCuidados;
+
+  @Column(name = "consulta_pre_observacoes_especiais", columnDefinition = "TEXT")
+  private String consultaPreObservacoesEspeciais;
+
   private void calcularCamposDerivados() {
     this.temAgendamento = agendamentoDataHora != null;
     this.temCid = cidCodigo != null && !cidCodigo.trim().isEmpty();

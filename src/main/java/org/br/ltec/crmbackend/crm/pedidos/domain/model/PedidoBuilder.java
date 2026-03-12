@@ -321,14 +321,13 @@ public class PedidoBuilder {
       this.criadoEm = LocalDateTime.now();
     }
 
-
     PedidoCirurgico pedido = new PedidoCirurgico(
             id,
             pacienteId,
             medicoSolicitante,
             medicoExecutor,
             procedimento,
-            todosProcedimentos,  // ← AGORA O CONSTRUTOR TEM QUE TER ESTE PARÂMETRO!
+            todosProcedimentos,
             convenio,
             cid,
             agendamento,
@@ -361,11 +360,9 @@ public class PedidoBuilder {
             qtdDiariasSolicitadas,
             cpfPaciente,
             emailPaciente,
-            sexoPaciente
+            sexoPaciente,
+            null  // 🔥 Adicionar ConsultaPreOperatoria (inicialmente null)
     );
-
-    // Auto-reset após build (opcional, mas recomendado)
-    // this.reset();
 
     return pedido;
   }

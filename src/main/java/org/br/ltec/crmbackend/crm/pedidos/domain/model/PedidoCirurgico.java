@@ -24,7 +24,7 @@ public class PedidoCirurgico {
   private StatusPedido status;
   private Prioridade prioridade;
   private Lateralidade lateralidade;
-  private final List<String> observacoes;
+  private List<String> observacoes;
   private final List<String> documentosAnexados;
   private final LocalDateTime criadoEm;
   private LocalDateTime atualizadoEm;
@@ -32,7 +32,7 @@ public class PedidoCirurgico {
   private String usuarioAtualizacao;
   private LocalDate dataPedido;
 
-  // 🔥 NOVOS CAMPOS EXTRAÍDOS DO PDF
+  // CAMPOS EXTRAÍDOS DO PDF
   private String indicacaoClinica;
   private String relatorioPreOperatorio;
   private String orientacoes;
@@ -60,9 +60,13 @@ public class PedidoCirurgico {
   private String emailPaciente;
   private String sexoPaciente;
 
-  // 🔥 Construtor simplificado
+  // 🔥 NOVO CAMPO - Consulta Pré-Operatória (versão simplificada)
+  private ConsultaPreOperatoria consultaPreOperatoria;
+
+  // ==================== CONSTRUTOR SIMPLIFICADO ====================
+
   public PedidoCirurgico(PedidoId id, PacienteId pacienteId, Medico medicoSolicitante,
-                         Procedimento procedimento,  List<Procedimento> todosProcedimentos,  Convenio convenio,
+                         Procedimento procedimento, List<Procedimento> todosProcedimentos, Convenio convenio,
                          Prioridade prioridade, String usuarioCriacao) {
 
     // Inicializa campos obrigatórios
@@ -88,7 +92,7 @@ public class PedidoCirurgico {
     this.usuarioAtualizacao = null;
     this.dataPedido = LocalDate.now();
 
-    // 🔥 Inicializa novos campos com null
+    // Inicializa campos extras com null
     this.indicacaoClinica = null;
     this.relatorioPreOperatorio = null;
     this.orientacoes = null;
@@ -109,9 +113,11 @@ public class PedidoCirurgico {
     this.cpfPaciente = null;
     this.emailPaciente = null;
     this.sexoPaciente = null;
+    this.consultaPreOperatoria = null;
   }
 
-  // Construtor completo ATUALIZADO com todos os novos campos
+  // ==================== CONSTRUTOR COMPLETO ====================
+
   public PedidoCirurgico(
           PedidoId id,
           PacienteId pacienteId,
@@ -133,7 +139,7 @@ public class PedidoCirurgico {
           String usuarioAtualizacao,
           LocalDate dataPedido,
 
-          // 🔥 NOVOS CAMPOS
+          // Campos existentes
           String indicacaoClinica,
           String relatorioPreOperatorio,
           String orientacoes,
@@ -153,7 +159,10 @@ public class PedidoCirurgico {
           String qtdDiariasSolicitadas,
           String cpfPaciente,
           String emailPaciente,
-          String sexoPaciente) {
+          String sexoPaciente,
+
+          // 🔥 NOVO CAMPO - Consulta Pré-Operatória
+          ConsultaPreOperatoria consultaPreOperatoria) {
 
     validarCriacao(id, pacienteId, medicoSolicitante, procedimento, convenio, status);
 
@@ -177,7 +186,7 @@ public class PedidoCirurgico {
     this.usuarioAtualizacao = usuarioAtualizacao;
     this.dataPedido = dataPedido != null ? dataPedido : LocalDate.now();
 
-    // 🔥 NOVOS CAMPOS
+    // Campos existentes
     this.indicacaoClinica = indicacaoClinica;
     this.relatorioPreOperatorio = relatorioPreOperatorio;
     this.orientacoes = orientacoes;
@@ -198,6 +207,9 @@ public class PedidoCirurgico {
     this.cpfPaciente = cpfPaciente;
     this.emailPaciente = emailPaciente;
     this.sexoPaciente = sexoPaciente;
+
+    // 🔥 NOVO CAMPO
+    this.consultaPreOperatoria = consultaPreOperatoria;
   }
 
   private void validarCriacao(PedidoId id, PacienteId pacienteId, Medico medicoSolicitante,
@@ -223,79 +235,106 @@ public class PedidoCirurgico {
     }
   }
 
-  // ==================== MÉTODOS DE NEGÓCIO ====================
+  // ==================== MÉTODOS DE NEGÓCIO - CONSULTA PRÉ (CORRIGIDOS) ====================
 
-  public void enviarParaAnalise(String usuario) {
-    if (!status.getTipo().podeSerAtualizadoPara(StatusPedido.Tipo.PENDENTE)) {
-      throw new IllegalStateException("Não é possível enviar para análise este pedido no status atual: " + status.getTipo());
+  public ConsultaPreOperatoria getConsultaPreOperatoria() {
+    return consultaPreOperatoria;
+  }
+
+  public void setConsultaPreOperatoria(ConsultaPreOperatoria consultaPreOperatoria) {
+    this.consultaPreOperatoria = consultaPreOperatoria;
+  }
+
+  /**
+   * Agendar consulta pré-operatória
+   */
+  public void agendarConsultaPre(LocalDateTime dataHora, String cuidados, String observacoesEspeciais) {
+
+    // Validar se pode agendar consulta pré
+    if (this.status.getTipo() != StatusPedido.Tipo.AGENDADO) {
+      throw new IllegalStateException(
+              "Só é possível agendar consulta pré após o agendamento da cirurgia. " +
+                      "Status atual: " + this.status.getTipo()
+      );
     }
-    this.status = new StatusPedido(StatusPedido.Tipo.PENDENTE, "Enviado para análise", usuario);
+
+    this.consultaPreOperatoria = ConsultaPreOperatoria.criar(
+            dataHora, cuidados, observacoesEspeciais
+    );
+
+    this.atualizadoEm = LocalDateTime.now();
+  }
+
+  /**
+   * Verifica se tem consulta pré agendada
+   */
+  public boolean temConsultaPreAgendada() {
+    return consultaPreOperatoria != null && consultaPreOperatoria.existe();
+  }
+
+  // ==================== MÉTODOS DE NEGÓCIO EXISTENTES ====================
+
+  public void atualizarStatus(StatusPedido.Tipo novoStatus, String usuario, String observacao) {
+
+    if (this.status.getTipo() == novoStatus) {
+      throw new IllegalStateException("Pedido já está com status: " + novoStatus);
+    }
+
+    if (!this.status.getTipo().podeSerAtualizadoPara(novoStatus)) {
+      throw new IllegalStateException(
+              String.format("Não é possível atualizar de %s para %s",
+                      this.status.getTipo(), novoStatus)
+      );
+    }
+
+    this.status = new StatusPedido(novoStatus, observacao, usuario);
+
+    if (observacao != null && !observacao.isEmpty()) {
+      adicionarObservacao(observacao, usuario);
+    }
+
     this.atualizadoEm = LocalDateTime.now();
     this.usuarioAtualizacao = usuario;
+  }
+
+  public void enviarParaAnalise(String usuario) {
+    atualizarStatus(StatusPedido.Tipo.PENDENTE, usuario, "Enviado para análise");
   }
 
   public void iniciarAnalise(String usuario) {
-    if (!status.getTipo().podeSerAtualizadoPara(StatusPedido.Tipo.EM_ANALISE)) {
-      throw new IllegalStateException("Não é possível iniciar análise deste pedido no status atual: " + status.getTipo());
-    }
-    this.status = new StatusPedido(StatusPedido.Tipo.EM_ANALISE, "Análise iniciada", usuario);
-    this.atualizadoEm = LocalDateTime.now();
-    this.usuarioAtualizacao = usuario;
+    atualizarStatus(StatusPedido.Tipo.EM_ANALISE, usuario, "Análise iniciada");
   }
 
   public void agendar(DataHoraAgendamento agendamento, String usuario) {
-    if (!status.getTipo().podeSerAtualizadoPara(StatusPedido.Tipo.AGENDADO)) {
-      throw new IllegalStateException("Não é possível agendar este pedido no status atual: " + status.getTipo());
-    }
     this.agendamento = agendamento;
-    this.status = new StatusPedido(StatusPedido.Tipo.AGENDADO, "Pedido agendado", usuario);
-    this.atualizadoEm = LocalDateTime.now();
-    this.usuarioAtualizacao = usuario;
+    atualizarStatus(StatusPedido.Tipo.AGENDAR, usuario, "Pedido agendado");
   }
 
   public void confirmar(String usuario, String observacoesConfirmacao) {
-    if (!status.getTipo().podeSerAtualizadoPara(StatusPedido.Tipo.CONFIRMADO)) {
-      throw new IllegalStateException("Não é possível confirmar este pedido no status atual: " + status.getTipo());
-    }
-    this.status = new StatusPedido(StatusPedido.Tipo.CONFIRMADO, observacoesConfirmacao, usuario);
-    this.atualizadoEm = LocalDateTime.now();
-    this.usuarioAtualizacao = usuario;
+    atualizarStatus(StatusPedido.Tipo.CONFIRMADO, usuario, observacoesConfirmacao);
   }
 
   public void iniciarProcedimento(String usuario) {
-    if (!status.getTipo().podeSerAtualizadoPara(StatusPedido.Tipo.EM_PROGRESSO)) {
-      throw new IllegalStateException("Não é possível iniciar procedimento deste pedido no status atual: " + status.getTipo());
-    }
-    this.status = new StatusPedido(StatusPedido.Tipo.EM_PROGRESSO, "Procedimento iniciado", usuario);
-    this.atualizadoEm = LocalDateTime.now();
-    this.usuarioAtualizacao = usuario;
+    atualizarStatus(StatusPedido.Tipo.EM_PROGRESSO, usuario, "Procedimento iniciado");
   }
 
   public void finalizar(String usuario, String observacoesFinalizacao) {
-    if (!status.getTipo().podeSerAtualizadoPara(StatusPedido.Tipo.REALIZADO)) {
-      throw new IllegalStateException("Não é possível finalizar este pedido no status atual: " + status.getTipo());
-    }
-    this.status = new StatusPedido(StatusPedido.Tipo.REALIZADO, observacoesFinalizacao, usuario);
-    this.atualizadoEm = LocalDateTime.now();
-    this.usuarioAtualizacao = usuario;
+    atualizarStatus(StatusPedido.Tipo.REALIZADO, usuario, observacoesFinalizacao);
   }
 
   public void cancelar(String usuario, String motivo) {
     if (status.getTipo().isFinal()) {
       throw new IllegalStateException("Não é possível cancelar um pedido com status final: " + status.getTipo());
     }
-    this.status = new StatusPedido(StatusPedido.Tipo.CANCELADO, motivo, usuario);
-    this.atualizadoEm = LocalDateTime.now();
-    this.usuarioAtualizacao = usuario;
+    atualizarStatus(StatusPedido.Tipo.CANCELADO, usuario, motivo);
   }
 
   public void rejeitar(String usuario, String motivo) {
-    if (!status.getTipo().podeSerAtualizadoPara(StatusPedido.Tipo.REJEITADO)) {
-      throw new IllegalStateException("Não é possível rejeitar este pedido no status atual: " + status.getTipo());
-    }
-    this.status = new StatusPedido(StatusPedido.Tipo.REJEITADO, motivo, usuario);
-    this.atualizadoEm = LocalDateTime.now();
-    this.usuarioAtualizacao = usuario;
+    atualizarStatus(StatusPedido.Tipo.REJEITADO, usuario, motivo);
+  }
+
+  public void aprovar(String usuario, String observacao) {
+    atualizarStatus(StatusPedido.Tipo.APROVADO, usuario, observacao);
   }
 
   // ==================== MÉTODOS DE ATUALIZAÇÃO ====================
@@ -359,7 +398,8 @@ public class PedidoCirurgico {
     this.usuarioAtualizacao = usuario;
   }
 
-  public void atualizarDadosClinicos(String indicacaoClinica, String relatorioPreOperatorio, String orientacoes, String usuario) {
+  public void atualizarDadosClinicos(String indicacaoClinica, String relatorioPreOperatorio,
+                                     String orientacoes, String usuario) {
     this.indicacaoClinica = indicacaoClinica;
     this.relatorioPreOperatorio = relatorioPreOperatorio;
     this.orientacoes = orientacoes;
@@ -388,7 +428,8 @@ public class PedidoCirurgico {
     this.usuarioAtualizacao = usuario;
   }
 
-  public void atualizarDadosContatoPaciente(String telefone, String endereco, String cpf, String email, String sexo, String usuario) {
+  public void atualizarDadosContatoPaciente(String telefone, String endereco, String cpf,
+                                            String email, String sexo, String usuario) {
     this.telefonePaciente = telefone;
     this.enderecoPaciente = endereco;
     this.cpfPaciente = cpf;
@@ -422,11 +463,18 @@ public class PedidoCirurgico {
   }
 
   public boolean precisaConfirmarJejum() {
-    return status.getTipo() == StatusPedido.Tipo.AGENDADO ||
+    return status.getTipo() == StatusPedido.Tipo.AGENDAR ||
             status.getTipo() == StatusPedido.Tipo.CONFIRMADO;
   }
 
-  // ==================== GETTERS ====================
+  public boolean podeSerEditado() {
+    return status.getTipo() == StatusPedido.Tipo.EM_ANALISE ||
+            status.getTipo() == StatusPedido.Tipo.REJEITADO ||
+            status.getTipo() == StatusPedido.Tipo.RASCUNHO ||
+            status.getTipo() == StatusPedido.Tipo.PENDENTE;
+  }
+
+  // ==================== GETTERS EXISTENTES ====================
 
   public PedidoId getId() {
     return id;
@@ -440,7 +488,9 @@ public class PedidoCirurgico {
     return medicoSolicitante;
   }
 
-  public void setMedicoSolicitante(Medico medicoSolicitante) { this.medicoSolicitante = medicoSolicitante; }
+  public void setMedicoSolicitante(Medico medicoSolicitante) {
+    this.medicoSolicitante = medicoSolicitante;
+  }
 
   public Medico getMedicoExecutor() {
     return medicoExecutor;
@@ -502,9 +552,11 @@ public class PedidoCirurgico {
     return dataPedido;
   }
 
-  public void setDataPedido(LocalDate dataPedido) { this.dataPedido = dataPedido; }
+  public void setDataPedido(LocalDate dataPedido) {
+    this.dataPedido = dataPedido;
+  }
 
-  // GETTERS PARA NOVOS CAMPOS
+  // GETTERS PARA CAMPOS EXISTENTES
   public String getIndicacaoClinica() {
     return indicacaoClinica;
   }
@@ -585,14 +637,12 @@ public class PedidoCirurgico {
     return sexoPaciente;
   }
 
-  // ==================== GETTER PARA TODOS PROCEDIMENTOS ====================
-
+  // GETTER PARA TODOS PROCEDIMENTOS
   public List<Procedimento> getTodosProcedimentos() {
     return todosProcedimentos != null ? Collections.unmodifiableList(todosProcedimentos) : Collections.emptyList();
   }
 
-  // ==================== SETTER PARA TODOS PROCEDIMENTOS ====================
-
+  // SETTER PARA TODOS PROCEDIMENTOS
   public void setTodosProcedimentos(List<Procedimento> todosProcedimentos) {
     this.todosProcedimentos = todosProcedimentos != null ? new ArrayList<>(todosProcedimentos) : new ArrayList<>();
   }
@@ -643,29 +693,6 @@ public class PedidoCirurgico {
     return numeroGuia != null || registroAns != null || numeroGuiaOperadora != null;
   }
 
-  public StatusPedido.Tipo analisar(boolean aprovado, String motivoRejeicao) {
-    if (status.getTipo() != StatusPedido.Tipo.EM_ANALISE) {
-      throw new IllegalStateException(
-              String.format("Pedido não está em análise. Status atual: %s", status.getTipo())
-      );
-    }
-
-    if (aprovado) {
-      return StatusPedido.Tipo.EM_ANALISE; // Mantém o mesmo status
-    } else {
-      if (motivoRejeicao == null || motivoRejeicao.trim().isEmpty()) {
-        throw new IllegalArgumentException("Motivo da reprovação é obrigatório");
-      }
-      return StatusPedido.Tipo.REJEITADO;
-    }
-  }
-
-  public boolean podeSerEditado() {
-    return status.getTipo() == StatusPedido.Tipo.EM_ANALISE ||
-            status.getTipo() == StatusPedido.Tipo.REJEITADO ||
-            status.getTipo() == StatusPedido.Tipo.RASCUNHO ||
-            status.getTipo() == StatusPedido.Tipo.PENDENTE;
-  }
   // ==================== EQUALS, HASHCODE, TOSTRING ====================
 
   @Override
@@ -685,10 +712,10 @@ public class PedidoCirurgico {
   public String toString() {
     return "PedidoCirurgico{" +
             "id=" + id +
-            ", procedimento=" + procedimento +
-            ", status=" + status.getTipo() +
+            ", procedimento=" + (procedimento != null ? procedimento.getDescricao() : "null") +
+            ", status=" + (status != null ? status.getTipo() : "null") +
             ", dataPedido=" + dataPedido +
-            ", temIndicacaoClinica=" + temIndicacaoClinica() +
+            ", temConsultaPre=" + (consultaPreOperatoria != null) +
             '}';
   }
 }

@@ -92,6 +92,12 @@ public class PedidoJpaMapper {
       entity.setAgendamentoObservacoes(pedido.getAgendamento().getObservacoes());
     }
 
+    if (pedido.getConsultaPreOperatoria() != null) {
+      entity.setConsultaPreDataHora(pedido.getConsultaPreOperatoria().getDataHora());
+      entity.setConsultaPreCuidados(pedido.getConsultaPreOperatoria().getCuidados());
+      entity.setConsultaPreObservacoesEspeciais(pedido.getConsultaPreOperatoria().getObservacoesEspeciais());
+    }
+
     // Status
     entity.setStatus(pedido.getStatus().getTipo().name());
     entity.setStatusObservacao(pedido.getStatus().getObservacao());
@@ -132,7 +138,7 @@ public class PedidoJpaMapper {
     }
 
     try {
-      // Criar Value Objects (código existente)
+      // Criar Value Objects
       PedidoId id = PedidoId.fromString(entity.getId().toString());
       PacienteId pacienteId = PacienteId.fromString(entity.getPacienteId().toString());
 
@@ -153,7 +159,7 @@ public class PedidoJpaMapper {
         );
       }
 
-      // Procedimento
+      // Procedimento principal
       Procedimento procedimento = new Procedimento(
               entity.getProcedimentoCodigoTuss(),
               entity.getProcedimentoDescricao(),
@@ -177,7 +183,7 @@ public class PedidoJpaMapper {
       // Agendamento
       DataHoraAgendamento agendamento = null;
       if (entity.getAgendamentoDataHora() != null) {
-        agendamento = new DataHoraAgendamento(
+        agendamento = DataHoraAgendamento.fromDatabase(
                 entity.getAgendamentoDataHora(),
                 entity.getAgendamentoSala(),
                 entity.getAgendamentoDuracaoEstimada(),
@@ -213,7 +219,7 @@ public class PedidoJpaMapper {
         documentosAnexados = Arrays.asList(entity.getDocumentosAnexados().split("\\|"));
       }
 
-      // 🔥 CRIAR O PEDIDO COM O BUILDER (sem a lista ainda)
+      // 🔥 CRIAR O PEDIDO COM O BUILDER
       PedidoCirurgico pedido = new PedidoBuilder()
               .comId(id)
               .comPacienteId(pacienteId)
@@ -254,8 +260,20 @@ public class PedidoJpaMapper {
               .comQtdDiariasSolicitadas(entity.getQtdDiariasSolicitadas())
               .build();
 
-      // ✅ AGORA SIM - SETAR A LISTA DE PROCEDIMENTOS USANDO O SETTER!
-      pedido.setTodosProcedimentos(entity.getProcedimentos());
+      // ✅ SETAR A LISTA DE PROCEDIMENTOS
+      if (entity.getProcedimentos() != null) {
+        pedido.setTodosProcedimentos(entity.getProcedimentos());
+      }
+
+      // 🔥 🔥 AGORA SIM - SETAR A CONSULTA PRÉ (DEPOIS DE CRIAR O PEDIDO)
+      if (entity.getConsultaPreDataHora() != null) {
+        ConsultaPreOperatoria consultaPre = ConsultaPreOperatoria.fromDatabase(
+                entity.getConsultaPreDataHora(),
+                entity.getConsultaPreCuidados(),
+                entity.getConsultaPreObservacoesEspeciais()
+        );
+        pedido.setConsultaPreOperatoria(consultaPre);
+      }
 
       return pedido;
 

@@ -34,4 +34,7 @@ public class PedidoDetalhadoResponse {
   private LocalDateTime agendadoPara;
   private List<String> observacoes;
   private List<String> documentosAnexados;
+  private LocalDateTime consultaPreDataHora;
+  private String consultaPreCuidados;
+  private String consultaPreObservacoesEspeciais;
 }
