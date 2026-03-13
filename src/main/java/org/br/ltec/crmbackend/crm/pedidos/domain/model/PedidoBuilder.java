@@ -2,14 +2,14 @@ package org.br.ltec.crmbackend.crm.pedidos.domain.model;
 
 import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.*;
-// import org.springframework.stereotype.Component; // REMOVIDO - não é mais Component
+import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.autorizacao.DadosAutorizacao; // 🔥 IMPORT
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
-// @Component REMOVIDO - será instanciado manualmente
 public class PedidoBuilder {
 
   private PedidoId id;
@@ -54,8 +54,11 @@ public class PedidoBuilder {
   private String emailPaciente;
   private String sexoPaciente;
 
+  // 🔥 NOVO CAMPO - DADOS DE AUTORIZAÇÃO
+  private DadosAutorizacao dadosAutorizacao;
+
   public PedidoBuilder() {
-    reset(); // Chama reset no construtor para inicializar tudo
+    reset();
   }
 
   // ==================== MÉTODOS DO BUILDER ====================
@@ -92,6 +95,20 @@ public class PedidoBuilder {
 
   public PedidoBuilder comConvenio(Convenio convenio) {
     this.convenio = convenio;
+    return this;
+  }
+
+  // 🔥 NOVO MÉTODO - DadosAutorizacao
+  public PedidoBuilder dadosAutorizacao(DadosAutorizacao dadosAutorizacao) {
+    this.dadosAutorizacao = dadosAutorizacao;
+    return this;
+  }
+
+  // 🔥 MÉTODO COM FUNCTION (opcional, para construção fluente)
+  public PedidoBuilder dadosAutorizacao(Function<DadosAutorizacao.Builder, DadosAutorizacao.Builder> builderFunction) {
+    DadosAutorizacao.Builder builder = new DadosAutorizacao.Builder();
+    builder = builderFunction.apply(builder);
+    this.dadosAutorizacao = builder.build();
     return this;
   }
 
@@ -309,6 +326,9 @@ public class PedidoBuilder {
     this.cpfPaciente = null;
     this.emailPaciente = null;
     this.sexoPaciente = null;
+
+    // 🔥 Reset do dadosAutorizacao
+    this.dadosAutorizacao = null;
   }
 
   // ==================== MÉTODO BUILD ====================
@@ -321,14 +341,13 @@ public class PedidoBuilder {
       this.criadoEm = LocalDateTime.now();
     }
 
-
     PedidoCirurgico pedido = new PedidoCirurgico(
             id,
             pacienteId,
             medicoSolicitante,
             medicoExecutor,
             procedimento,
-            todosProcedimentos,  // ← AGORA O CONSTRUTOR TEM QUE TER ESTE PARÂMETRO!
+            todosProcedimentos,
             convenio,
             cid,
             agendamento,
@@ -361,11 +380,10 @@ public class PedidoBuilder {
             qtdDiariasSolicitadas,
             cpfPaciente,
             emailPaciente,
-            sexoPaciente
+            sexoPaciente,
+            null,  // ConsultaPreOperatoria
+            dadosAutorizacao  // 🔥 NOVO - DadosAutorizacao
     );
-
-    // Auto-reset após build (opcional, mas recomendado)
-    // this.reset();
 
     return pedido;
   }

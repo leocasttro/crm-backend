@@ -19,7 +19,6 @@ public class CreatePedidoUseCase {
   private final PedidoRepository pedidoRepository;
   private final PacienteRepository pacienteRepository;
   private final CreatePacienteUseCase createPacienteUseCase;
-  // REMOVIDO: private final PedidoBuilder pedidoBuilder; - não é mais injetado
 
   public CreatePedidoUseCase(PedidoRepository pedidoRepository,
                              PacienteRepository pacienteRepository,
@@ -27,7 +26,6 @@ public class CreatePedidoUseCase {
     this.pedidoRepository = pedidoRepository;
     this.pacienteRepository = pacienteRepository;
     this.createPacienteUseCase = createPacienteUseCase;
-    // REMOVIDO: this.pedidoBuilder = pedidoBuilder;
   }
 
   public PedidoCirurgico execute(CreatePedidoCommand command) {
@@ -72,7 +70,7 @@ public class CreatePedidoUseCase {
         );
       }
 
-      // PROCEDIMENTO - Usar a descrição do procedimento (não a indicação clínica)
+      // PROCEDIMENTO
       if (command.getProcedimentos() == null || command.getProcedimentos().isEmpty()) {
         throw new IllegalArgumentException("Pelo menos um procedimento é obrigatório");
       }
@@ -93,10 +91,10 @@ public class CreatePedidoUseCase {
         cid = new CID(command.getCidCodigo(), command.getCidDescricao());
       }
 
-      // Agendamento
+      // 🔥 CORREÇÃO AQUI: Usar criar() em vez do construtor
       DataHoraAgendamento agendamento = null;
       if (command.getAgendamentoDataHora() != null) {
-        agendamento = new DataHoraAgendamento(
+        agendamento = DataHoraAgendamento.criar(
                 command.getAgendamentoDataHora(),
                 command.getAgendamentoSala(),
                 command.getAgendamentoDuracaoEstimada(),
@@ -128,7 +126,7 @@ public class CreatePedidoUseCase {
               .comTodosProcedimentos(todosProcedimentos)
               .comConvenio(convenio)
               .comCid(cid)
-              .comAgendamento(agendamento)
+              .comAgendamento(agendamento)  // ✅ Agora usa o objeto criado corretamente
               .comStatus(status)
               .comPrioridade(prioridade)
               .comLateralidade(lateralidade)

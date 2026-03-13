@@ -101,6 +101,17 @@ public class PedidoResponse {
   private List<String> observacoes;
   private int quantidadeObservacoes;
 
+  // 🔥 NOVOS CAMPOS - CONSULTA PRÉ-OPERATÓRIA
+  private LocalDateTime consultaPreDataHora;
+  private String consultaPreCuidados;
+  private String consultaPreObservacoesEspeciais;
+
+  private String statusAutorizacao;
+  private String numeroGuiaAutorizacao;
+  private String senhaAutorizacao;
+  private LocalDate validadeAutorizacao;
+  private String tipoAcomodacao;
+
   // 🔥 Classe interna para resposta de procedimentos
   @Data
   @Builder

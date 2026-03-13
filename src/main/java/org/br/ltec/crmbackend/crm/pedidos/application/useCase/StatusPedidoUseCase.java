@@ -49,7 +49,7 @@ public class StatusPedidoUseCase {
       case REJEITADO:
         pedido.rejeitar(command.getUsuario(), command.getObservacao());
         break;
-      case AGENDADO:
+      case AGENDAR:
         throw new IllegalStateException("Use o caso de uso de agendamento para alterar status para AGENDADO");
       case RASCUNHO:
         throw new IllegalStateException("Não é possível voltar o pedido para status RASCUNHO");

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -33,8 +33,11 @@ public class PedidoController {
   private final StatusPedidoUseCase statusUseCase;
   private final UpdatePedidoUseCase updatePedidoUseCase;
   private final CreatePedidoFromPdfUseCase createFromPdfUseCase;
-  private final AnalisarPedidoUseCase analisarPedidoUseCase;
+  private final AtualizarStatusPedidoUseCase analisarPedidoUseCase;
   private final CreatePacienteUseCase createPacienteUseCase;
+  private final AtualizarStatusPedidoUseCase atualizarStatusPedidoUseCase;
+  private final AgendarPedidoUseCase agendarPedidoUseCase;
+  private final SalvarDadosAutorizacaoUseCase salvarDadosAutorizacaoUseCase;
 
   @PostMapping
   public ResponseEntity<PedidoResponse> criar(@Valid @RequestBody CreatePedidoRequest req) {
@@ -122,22 +125,27 @@ public class PedidoController {
     return ResponseEntity.ok(toDetalhadoResponse(pedido));
   }
 
-  @PatchMapping("/{id}/agendar")
-  public ResponseEntity<PedidoResponse> agendar(
-          @PathVariable String id,
-          @RequestBody AgendamentoPedidoCommand command) {
-
-    command.setPedidoId(id);
-    PedidoCirurgico atualizado = agendarUseCase.execute(command);
-
-    return ResponseEntity.ok(toResponse(atualizado));
-  }
-
   @PostMapping(value = "/importar-pdf", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<ImportPedidoPdfResponse> importarPdf(@RequestPart("pdf") MultipartFile pdf) throws IOException {
 
     ImportPedidoPdfResponse response = createFromPdfUseCase.execute(pdf);
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  @PostMapping("/{pedidoId}/agendar")
+  public ResponseEntity<PedidoResponse> agendarPedido(
+          @PathVariable String pedidoId,
+          @RequestBody AgendamentoRequest request) {
+
+    var command = AgendamentoPedidoCommand.builder()
+            .pedidoId(pedidoId)
+            .dataAgendamento(request.getDataAgendamento())
+            .observacao(request.getObservacao())
+            .build();
+
+    PedidoCirurgico pedido = agendarPedidoUseCase.execute(command);
+
+    return ResponseEntity.ok(toResponse(pedido));
   }
 
   @PutMapping("/{id}")
@@ -235,12 +243,10 @@ public class PedidoController {
           @PathVariable String id,
           @Valid @RequestBody AnaliseRequest request) {
 
-    AnalisarPedidoCommand command = new AnalisarPedidoCommand();
+    AtualizarStatusCommand command = new AtualizarStatusCommand();
     command.setPedidoId(id);
     command.setUsuario(getUsuarioLogado());
-    command.setAprovado(request.isAprovado());
     command.setObservacao(request.getObservacao());
-    command.setMotivoRejeicao(request.getMotivoRejeicao());
 
     ResultadoOperacao<PedidoCirurgico> resultado = analisarPedidoUseCase.execute(command);
 
@@ -253,6 +259,46 @@ public class PedidoController {
             request.isAprovado(),
             resultado.getMensagem(),
             toResponse(resultado.getDados())
+    ));
+  }
+
+  @PatchMapping("/{id}/status")
+  public ResponseEntity<AtualizarStatusResponse> atualizarStatus(
+          @PathVariable String id,
+          @Valid @RequestBody AtualizarStatusRequest request) {
+
+    AtualizarStatusCommand command = new AtualizarStatusCommand();
+    command.setPedidoId(id);
+    command.setNovoStatus(request.getStatus());
+    command.setObservacao(request.getObservacao());
+    command.setUsuario(getUsuarioLogado());
+
+    PedidoCirurgico pedidoAntes = findUseCase.findById(id)
+            .orElseThrow(() -> new RuntimeException("Pedido não encontrado com id: " + id));
+
+    String statusAnterior = pedidoAntes.getStatus().getTipo().name();
+
+    ResultadoOperacao<PedidoCirurgico> resultado = atualizarStatusPedidoUseCase.execute(command);
+
+    if (!resultado.isSucesso()) {
+      return ResponseEntity.badRequest()
+              .body(AtualizarStatusResponse.erro(
+                      resultado.getMensagem(),
+                      resultado.getErros()
+              ));
+    }
+
+    PedidoCirurgico pedido = resultado.getDados();
+
+    return ResponseEntity.ok(AtualizarStatusResponse.sucesso(
+            resultado.getMensagem(),
+            pedido.getId().getValue().toString(),
+            statusAnterior,
+            pedido.getStatus().getTipo().name(),
+            pedido.getPacienteId() != null ? pedido.getPacienteId().getValue().toString() : null,
+            pedido.getProcedimento() != null ? pedido.getProcedimento().getDescricao() : null,
+            getUsuarioLogado(),
+            request.getObservacao()
     ));
   }
 
@@ -282,6 +328,37 @@ public class PedidoController {
             toResponse(resultado.getDados()),
             resultado.getMensagem()
     ));
+  }
+
+  @PutMapping("/{id}/autorizacao")
+  public ResponseEntity<?> salvarDadosAutorizacao(
+          @PathVariable UUID id,
+          @RequestBody SalvarDadosAutorizacaoRequest request
+  ) {
+    try {
+      SalvarDadosAutorizacaoCommand command = new SalvarDadosAutorizacaoCommand(
+              id,
+              request.getStatusAutorizacao(),
+              request.getNumeroGuia(),
+              request.getSenhaAutorizacao(),
+              request.getValidadeAutorizacao(),
+              request.getTipoAcomodacao(),
+              getUsuarioLogado()
+      );
+
+      PedidoCirurgico pedido = salvarDadosAutorizacaoUseCase.execute(command);
+
+      return ResponseEntity.ok(UpdateResponse.sucesso(
+              "Dados de autorização salvos com sucesso",
+              null,  // Lista de alterações (pode ser null ou empty)
+              toResponse(pedido)
+      ));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest().body(UpdateResponse.erro(
+              e.getMessage(),
+              (String) null  // ou List.of(e.getMessage())
+      ));
+    }
   }
 
   // ==================== MÉTODOS PRIVADOS ====================
@@ -317,7 +394,7 @@ public class PedidoController {
             .procedimentoCategoria(p.getProcedimento().getCategoria())
             .procedimentos(procedimentosResponse)
 
-            // 🔥 DADOS CLÍNICOS
+            // DADOS CLÍNICOS
             .indicacaoClinica(p.getIndicacaoClinica())
             .relatorioPreOperatorio(p.getRelatorioPreOperatorio())
             .orientacoes(p.getOrientacoes())
@@ -350,19 +427,19 @@ public class PedidoController {
             .medicoSolicitanteCrm(p.getMedicoSolicitante().getCrm())
             .medicoSolicitanteEspecialidade(p.getMedicoSolicitante().getEspecialidade())
 
-            // 🔥 Médico executor
+            // Médico executor
             .medicoExecutorNome(p.getMedicoExecutor() != null ? p.getMedicoExecutor().getNome() : null)
             .medicoExecutorCrm(p.getMedicoExecutor() != null ? p.getMedicoExecutor().getCrm() : null)
             .medicoExecutorEspecialidade(p.getMedicoExecutor() != null ? p.getMedicoExecutor().getEspecialidade() : null)
 
-            // 🔥 Dados da guia
+            // Dados da guia
             .numeroGuia(p.getNumeroGuia())
             .registroAns(p.getRegistroAns())
             .numeroGuiaOperadora(p.getNumeroGuiaOperadora())
             .codigoOperadora(p.getCodigoOperadora())
             .nomeContratado(p.getNomeContratado())
 
-            // 🔥 Dados da internação
+            // Dados da internação
             .caraterAtendimento(p.getCaraterAtendimento())
             .tipoInternacao(p.getTipoInternacao())
             .regimeInternacao(p.getRegimeInternacao())
@@ -374,6 +451,21 @@ public class PedidoController {
             .observacoes(p.getObservacoes())
             .quantidadeObservacoes(p.getObservacoes().size())
 
+            // 🔥 NOVOS CAMPOS - CONSULTA PRÉ-OPERATÓRIA
+            .consultaPreDataHora(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getDataHora() : null)
+            .consultaPreCuidados(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getCuidados() : null)
+            .consultaPreObservacoesEspeciais(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getObservacoesEspeciais() : null)
+
+            .statusAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getStatus() != null ?
+                    p.getDadosAutorizacao().getStatus().getValor() : null)
+            .numeroGuiaAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getNumeroGuia() != null ?
+                    p.getDadosAutorizacao().getNumeroGuia().getValor() : null)
+            .senhaAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getSenha() != null ?
+                    p.getDadosAutorizacao().getSenha().getValor() : null)
+            .validadeAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getValidade() != null ?
+                    p.getDadosAutorizacao().getValidade().getValor() : null)
+            .tipoAcomodacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getTipoAcomodacao() != null ?
+                    p.getDadosAutorizacao().getTipoAcomodacao().getValor() : null)
             .build();
   }
 
@@ -400,6 +492,22 @@ public class PedidoController {
             .agendadoPara(p.temAgendamento() ? p.getAgendamento().getDataHora() : null)
             .observacoes(p.getObservacoes())
             .documentosAnexados(p.getDocumentosAnexados())
+
+            .consultaPreDataHora(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getDataHora() : null)
+            .consultaPreCuidados(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getCuidados() : null)
+            .consultaPreObservacoesEspeciais(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getObservacoesEspeciais() : null)
+
+            .statusAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getStatus() != null ?
+                    p.getDadosAutorizacao().getStatus().getValor() : null)
+            .numeroGuiaAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getNumeroGuia() != null ?
+                    p.getDadosAutorizacao().getNumeroGuia().getValor() : null)
+            .senhaAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getSenha() != null ?
+                    p.getDadosAutorizacao().getSenha().getValor() : null)
+            .validadeAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getValidade() != null ?
+                    p.getDadosAutorizacao().getValidade().getValor() : null)
+            .tipoAcomodacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getTipoAcomodacao() != null ?
+                    p.getDadosAutorizacao().getTipoAcomodacao().getValor() : null)
+
             .build();
   }
 

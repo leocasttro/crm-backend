@@ -8,12 +8,14 @@ public class StatusPedido {
     RASCUNHO("Rascunho", "Draft"),
     PENDENTE("Pendente", "Pending"),
     EM_ANALISE("Em Análise", "In Analysis"),
+    APROVADO("Aprovado", "Approved"),              // 🔥 NOVO
+    REJEITADO("Rejeitado", "Rejected"),            // Já existia
+    AGENDAR("Agendar", "Scheduled"),
     AGENDADO("Agendado", "Scheduled"),
     CONFIRMADO("Confirmado", "Confirmed"),
     EM_PROGRESSO("Em Progresso", "In Progress"),
     REALIZADO("Realizado", "Completed"),
-    CANCELADO("Cancelado", "Cancelled"),
-    REJEITADO("Rejeitado", "Rejected");
+    CANCELADO("Cancelado", "Cancelled");
 
     private final String descricao;
     private final String descricaoIngles;
@@ -35,18 +37,20 @@ public class StatusPedido {
       return switch (this) {
         case RASCUNHO -> novoStatus == PENDENTE || novoStatus == CANCELADO;
         case PENDENTE -> novoStatus == EM_ANALISE || novoStatus == CANCELADO;
-        case EM_ANALISE -> novoStatus == AGENDADO || novoStatus == REJEITADO || novoStatus == CANCELADO;
+        case EM_ANALISE -> novoStatus == APROVADO || novoStatus == REJEITADO || novoStatus == CANCELADO; // 🔥 AGORA VAI PARA APROVADO
+        case APROVADO -> novoStatus == AGENDAR || novoStatus == CANCELADO; // 🔥 NOVO: Aprovado pode ir para agendado
+        case REJEITADO -> novoStatus == EM_ANALISE || novoStatus == CANCELADO; // 🔥 CORRIGIDO: Rejeitado pode voltar para análise
+        case AGENDAR -> novoStatus == CONFIRMADO || novoStatus == CANCELADO;
         case AGENDADO -> novoStatus == CONFIRMADO || novoStatus == CANCELADO;
         case CONFIRMADO -> novoStatus == EM_PROGRESSO || novoStatus == CANCELADO;
         case EM_PROGRESSO -> novoStatus == REALIZADO || novoStatus == CANCELADO;
         case REALIZADO -> false; // Não pode mudar após realizado
         case CANCELADO -> false; // Não pode mudar após cancelado
-        case REJEITADO -> false; // Não pode mudar após rejeitado
       };
     }
 
     public boolean isFinal() {
-      return this == REALIZADO || this == CANCELADO || this == REJEITADO;
+      return this == REALIZADO || this == CANCELADO; // 🔥 REJEITADO NÃO É MAIS FINAL!
     }
 
     public boolean isAtivo() {
