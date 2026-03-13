@@ -37,6 +37,7 @@ public class PedidoController {
   private final CreatePacienteUseCase createPacienteUseCase;
   private final AtualizarStatusPedidoUseCase atualizarStatusPedidoUseCase;
   private final AgendarPedidoUseCase agendarPedidoUseCase;
+  private final SalvarDadosAutorizacaoUseCase salvarDadosAutorizacaoUseCase;
 
   @PostMapping
   public ResponseEntity<PedidoResponse> criar(@Valid @RequestBody CreatePedidoRequest req) {
@@ -329,6 +330,37 @@ public class PedidoController {
     ));
   }
 
+  @PutMapping("/{id}/autorizacao")
+  public ResponseEntity<?> salvarDadosAutorizacao(
+          @PathVariable UUID id,
+          @RequestBody SalvarDadosAutorizacaoRequest request
+  ) {
+    try {
+      SalvarDadosAutorizacaoCommand command = new SalvarDadosAutorizacaoCommand(
+              id,
+              request.getStatusAutorizacao(),
+              request.getNumeroGuia(),
+              request.getSenhaAutorizacao(),
+              request.getValidadeAutorizacao(),
+              request.getTipoAcomodacao(),
+              getUsuarioLogado()
+      );
+
+      PedidoCirurgico pedido = salvarDadosAutorizacaoUseCase.execute(command);
+
+      return ResponseEntity.ok(UpdateResponse.sucesso(
+              "Dados de autorização salvos com sucesso",
+              null,  // Lista de alterações (pode ser null ou empty)
+              toResponse(pedido)
+      ));
+    } catch (Exception e) {
+      return ResponseEntity.badRequest().body(UpdateResponse.erro(
+              e.getMessage(),
+              (String) null  // ou List.of(e.getMessage())
+      ));
+    }
+  }
+
   // ==================== MÉTODOS PRIVADOS ====================
 
   private PedidoResponse toResponse(PedidoCirurgico p) {
@@ -424,6 +456,16 @@ public class PedidoController {
             .consultaPreCuidados(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getCuidados() : null)
             .consultaPreObservacoesEspeciais(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getObservacoesEspeciais() : null)
 
+            .statusAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getStatus() != null ?
+                    p.getDadosAutorizacao().getStatus().getValor() : null)
+            .numeroGuiaAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getNumeroGuia() != null ?
+                    p.getDadosAutorizacao().getNumeroGuia().getValor() : null)
+            .senhaAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getSenha() != null ?
+                    p.getDadosAutorizacao().getSenha().getValor() : null)
+            .validadeAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getValidade() != null ?
+                    p.getDadosAutorizacao().getValidade().getValor() : null)
+            .tipoAcomodacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getTipoAcomodacao() != null ?
+                    p.getDadosAutorizacao().getTipoAcomodacao().getValor() : null)
             .build();
   }
 
@@ -454,6 +496,17 @@ public class PedidoController {
             .consultaPreDataHora(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getDataHora() : null)
             .consultaPreCuidados(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getCuidados() : null)
             .consultaPreObservacoesEspeciais(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getObservacoesEspeciais() : null)
+
+            .statusAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getStatus() != null ?
+                    p.getDadosAutorizacao().getStatus().getValor() : null)
+            .numeroGuiaAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getNumeroGuia() != null ?
+                    p.getDadosAutorizacao().getNumeroGuia().getValor() : null)
+            .senhaAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getSenha() != null ?
+                    p.getDadosAutorizacao().getSenha().getValor() : null)
+            .validadeAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getValidade() != null ?
+                    p.getDadosAutorizacao().getValidade().getValor() : null)
+            .tipoAcomodacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getTipoAcomodacao() != null ?
+                    p.getDadosAutorizacao().getTipoAcomodacao().getValor() : null)
 
             .build();
   }

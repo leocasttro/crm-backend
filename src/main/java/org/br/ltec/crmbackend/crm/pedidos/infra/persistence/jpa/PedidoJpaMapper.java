@@ -4,13 +4,13 @@ import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoBuilder;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoCirurgico;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.*;
+import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.autorizacao.DadosAutorizacao;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class PedidoJpaMapper {
@@ -129,6 +129,17 @@ public class PedidoJpaMapper {
     entity.setUsuarioAtualizacao(pedido.getUsuarioAtualizacao());
     entity.setDataPedido(pedido.getDataPedido());
 
+    // 🔥 🔥 NOVO - DADOS DE AUTORIZAÇÃO
+    if (pedido.getDadosAutorizacao() != null) {
+      DadosAutorizacao dados = pedido.getDadosAutorizacao();
+
+      entity.setStatusAutorizacao(dados.getStatus() != null ? dados.getStatus().getValor() : null);
+      entity.setNumeroGuiaAutorizacao(dados.getNumeroGuia() != null ? dados.getNumeroGuia().getValor() : null);
+      entity.setSenhaAutorizacao(dados.getSenha() != null ? dados.getSenha().getValor() : null);
+      entity.setValidadeAutorizacao(dados.getValidade() != null ? dados.getValidade().getValor() : null);
+      entity.setTipoAcomodacao(dados.getTipoAcomodacao() != null ? dados.getTipoAcomodacao().getValor() : null);
+    }
+
     return entity;
   }
 
@@ -219,6 +230,23 @@ public class PedidoJpaMapper {
         documentosAnexados = Arrays.asList(entity.getDocumentosAnexados().split("\\|"));
       }
 
+      // 🔥 🔥 DADOS DE AUTORIZAÇÃO
+      DadosAutorizacao dadosAutorizacao = null;
+      if (entity.getStatusAutorizacao() != null ||
+              entity.getNumeroGuiaAutorizacao() != null ||
+              entity.getSenhaAutorizacao() != null ||
+              entity.getValidadeAutorizacao() != null ||
+              entity.getTipoAcomodacao() != null) {
+
+        dadosAutorizacao = new DadosAutorizacao.Builder()
+                .status(entity.getStatusAutorizacao())
+                .numeroGuia(entity.getNumeroGuiaAutorizacao())
+                .senha(entity.getSenhaAutorizacao())
+                .validade(entity.getValidadeAutorizacao())
+                .tipoAcomodacao(entity.getTipoAcomodacao())
+                .build();
+      }
+
       // 🔥 CRIAR O PEDIDO COM O BUILDER
       PedidoCirurgico pedido = new PedidoBuilder()
               .comId(id)
@@ -258,6 +286,7 @@ public class PedidoJpaMapper {
               .comTipoInternacao(entity.getTipoInternacao())
               .comRegimeInternacao(entity.getRegimeInternacao())
               .comQtdDiariasSolicitadas(entity.getQtdDiariasSolicitadas())
+              .dadosAutorizacao(dadosAutorizacao)  // 🔥 NOVO
               .build();
 
       // ✅ SETAR A LISTA DE PROCEDIMENTOS
@@ -265,7 +294,7 @@ public class PedidoJpaMapper {
         pedido.setTodosProcedimentos(entity.getProcedimentos());
       }
 
-      // 🔥 🔥 AGORA SIM - SETAR A CONSULTA PRÉ (DEPOIS DE CRIAR O PEDIDO)
+      // 🔥 SETAR A CONSULTA PRÉ
       if (entity.getConsultaPreDataHora() != null) {
         ConsultaPreOperatoria consultaPre = ConsultaPreOperatoria.fromDatabase(
                 entity.getConsultaPreDataHora(),

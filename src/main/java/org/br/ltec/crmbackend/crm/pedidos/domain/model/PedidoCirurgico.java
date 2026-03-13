@@ -1,7 +1,9 @@
 package org.br.ltec.crmbackend.crm.pedidos.domain.model;
 
+import lombok.extern.slf4j.Slf4j;
 import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.*;
+import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.autorizacao.DadosAutorizacao;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -10,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 public class PedidoCirurgico {
 
   private final PedidoId id;
@@ -62,6 +65,7 @@ public class PedidoCirurgico {
 
   // 🔥 NOVO CAMPO - Consulta Pré-Operatória (versão simplificada)
   private ConsultaPreOperatoria consultaPreOperatoria;
+  private DadosAutorizacao dadosAutorizacao;
 
   // ==================== CONSTRUTOR SIMPLIFICADO ====================
 
@@ -162,7 +166,8 @@ public class PedidoCirurgico {
           String sexoPaciente,
 
           // 🔥 NOVO CAMPO - Consulta Pré-Operatória
-          ConsultaPreOperatoria consultaPreOperatoria) {
+          ConsultaPreOperatoria consultaPreOperatoria,
+          DadosAutorizacao dadosAutorizacao) {
 
     validarCriacao(id, pacienteId, medicoSolicitante, procedimento, convenio, status);
 
@@ -210,6 +215,7 @@ public class PedidoCirurgico {
 
     // 🔥 NOVO CAMPO
     this.consultaPreOperatoria = consultaPreOperatoria;
+    this.dadosAutorizacao = dadosAutorizacao;
   }
 
   private void validarCriacao(PedidoId id, PacienteId pacienteId, Medico medicoSolicitante,
@@ -367,6 +373,39 @@ public class PedidoCirurgico {
     this.cid = cid;
     this.atualizadoEm = LocalDateTime.now();
     this.usuarioAtualizacao = usuario;
+  }
+
+  public void atualizarDadosAutorizacao(DadosAutorizacao novosDados) {
+    log.debug("Iniciando atualização de dados de autorização");
+    log.debug("novosDados é null? {}", novosDados == null);
+
+    if (novosDados == null) {
+      throw new IllegalArgumentException("Dados de autorização não podem ser nulos");
+    }
+
+    log.debug("Status do novosDados: {}", novosDados.getStatus());
+    log.debug("Status do dadosAutorizacao atual: {}", this.dadosAutorizacao != null ? this.dadosAutorizacao.getStatus() : "null");
+
+    // Verificar se houve mudança no status
+    if (this.dadosAutorizacao != null &&
+            this.dadosAutorizacao.getStatus() != null &&
+            novosDados.getStatus() != null &&
+            !this.dadosAutorizacao.getStatus().equals(novosDados.getStatus())) {
+
+      log.debug("Status mudou, adicionando observação");
+      String observacao = String.format("Status de autorização alterado de %s para %s",
+              this.dadosAutorizacao.getStatus().getValor(),
+              novosDados.getStatus().getValor());
+      adicionarObservacao(observacao, "sistema");
+    }
+
+    log.debug("Atualizando dadosAutorizacao");
+    this.dadosAutorizacao = novosDados;
+
+    log.debug("Atualizando atualizadoEm");
+    this.atualizadoEm = LocalDateTime.now();
+
+    log.debug("Atualização concluída com sucesso");
   }
 
   public void atualizarCIDsSecundarios(String cid2, String cid3, String cid4, String usuario) {
@@ -647,6 +686,9 @@ public class PedidoCirurgico {
     this.todosProcedimentos = todosProcedimentos != null ? new ArrayList<>(todosProcedimentos) : new ArrayList<>();
   }
 
+  public DadosAutorizacao getDadosAutorizacao() {
+    return dadosAutorizacao;
+  }
   // ==================== MÉTODOS DE CONSULTA BOOLEANOS ====================
 
   public boolean isRascunho() {

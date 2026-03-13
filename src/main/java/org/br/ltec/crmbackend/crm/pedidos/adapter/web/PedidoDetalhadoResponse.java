@@ -37,4 +37,9 @@ public class PedidoDetalhadoResponse {
   private LocalDateTime consultaPreDataHora;
   private String consultaPreCuidados;
   private String consultaPreObservacoesEspeciais;
+  private String statusAutorizacao;
+  private String numeroGuiaAutorizacao;
+  private String senhaAutorizacao;
+  private LocalDate validadeAutorizacao;
+  private String tipoAcomodacao;
 }

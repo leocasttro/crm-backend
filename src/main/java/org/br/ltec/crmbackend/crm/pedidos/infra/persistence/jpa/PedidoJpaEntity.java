@@ -271,6 +271,21 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   @Column(name = "consulta_pre_observacoes_especiais", columnDefinition = "TEXT")
   private String consultaPreObservacoesEspeciais;
 
+  @Column(name = "status_autorizacao", columnDefinition = "TEXT")
+  private String statusAutorizacao;
+
+  @Column(name = "numero_guia_autorizacao", columnDefinition = "TEXT")
+  private String numeroGuiaAutorizacao;
+
+  @Column(name = "senha_autorizacao", columnDefinition = "TEXT")
+  private String senhaAutorizacao;
+
+  @Column(name = "validade_autorizacao")
+  private LocalDate validadeAutorizacao;
+
+  @Column(name = "tipo_acomodacao", columnDefinition = "TEXT")
+  private String tipoAcomodacao;
+
   private void calcularCamposDerivados() {
     this.temAgendamento = agendamentoDataHora != null;
     this.temCid = cidCodigo != null && !cidCodigo.trim().isEmpty();
