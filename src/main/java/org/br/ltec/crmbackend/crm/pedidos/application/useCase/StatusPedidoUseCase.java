@@ -19,14 +19,12 @@ public class StatusPedidoUseCase {
   }
 
   public PedidoCirurgico execute(StatusPedidoCommand command) {
-    // Buscar pedido
     PedidoId pedidoId = PedidoId.fromString(command.getPedidoId());
     PedidoCirurgico pedido = pedidoRepository.buscarPorId(pedidoId)
             .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado com ID: " + command.getPedidoId()));
 
     StatusPedido.Tipo novoTipo = StatusPedido.Tipo.fromString(command.getStatus());
 
-    // Executar transição de status apropriada
     switch (novoTipo) {
       case PENDENTE:
         pedido.enviarParaAnalise(command.getUsuario());
@@ -57,7 +55,6 @@ public class StatusPedidoUseCase {
         throw new IllegalArgumentException("Status não suportado: " + command.getStatus());
     }
 
-    // Salvar pedido atualizado
     return pedidoRepository.salvar(pedido);
   }
 }

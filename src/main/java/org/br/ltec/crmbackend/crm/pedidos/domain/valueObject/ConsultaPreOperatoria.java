@@ -11,30 +11,30 @@ public class ConsultaPreOperatoria {
   private final LocalDateTime dataHora;
   private final String cuidados;
   private final String observacoesEspeciais;
+  private final String local;
 
-  // Construtor privado
   private ConsultaPreOperatoria(LocalDateTime dataHora, String cuidados,
-                                String observacoesEspeciais) {
+                                String observacoesEspeciais, String local) {
     this.dataHora = dataHora;
     this.cuidados = cuidados != null ? cuidados.trim() : "";
     this.observacoesEspeciais = observacoesEspeciais != null ? observacoesEspeciais.trim() : "";
+    this.local = local;
   }
 
-  // Factory method para criar nova consulta (COM validação)
   public static ConsultaPreOperatoria criar(LocalDateTime dataHora, String cuidados,
-                                            String observacoesEspeciais) {
+                                            String observacoesEspeciais, String local) {
     validarDataHora(dataHora);
-    return new ConsultaPreOperatoria(dataHora, cuidados, observacoesEspeciais);
+    return new ConsultaPreOperatoria(dataHora, cuidados, observacoesEspeciais, local);
   }
 
-  // Factory method para leitura do banco (SEM validação)
   @JsonCreator
   public static ConsultaPreOperatoria fromDatabase(
           @JsonProperty("dataHora") LocalDateTime dataHora,
           @JsonProperty("cuidados") String cuidados,
-          @JsonProperty("observacoesEspeciais") String observacoesEspeciais) {
+          @JsonProperty("observacoesEspeciais") String observacoesEspeciais,
+          @JsonProperty("local") String local) {
 
-    return new ConsultaPreOperatoria(dataHora, cuidados, observacoesEspeciais);
+    return new ConsultaPreOperatoria(dataHora, cuidados, observacoesEspeciais, local);
   }
 
   private static void validarDataHora(LocalDateTime dataHora) {
@@ -59,6 +59,9 @@ public class ConsultaPreOperatoria {
     return observacoesEspeciais;
   }
 
+  public String getLocal() { return local; }
+
+  public String local() { return local; }
   // Métodos de conveniência
   public String getDataFormatada() {
     return dataHora != null ? dataHora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";

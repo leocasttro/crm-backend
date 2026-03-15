@@ -37,14 +37,14 @@ public class SalvarDadosAutorizacaoUseCase {
     // Construir os dados de autorização
     log.debug("Construindo DadosAutorizacao com: status={}, numeroGuia={}, senha={}, validade={}, tipoAcomodacao={}",
             command.getStatusAutorizacao(),
-            command.getNumeroGuia(),
+            command.getNumeroGuiaAutorizacao(),
             command.getSenhaAutorizacao() != null ? "***" : null,
             command.getValidadeAutorizacao(),
             command.getTipoAcomodacao());
 
     DadosAutorizacao dadosAutorizacao = new DadosAutorizacao.Builder()
             .status(command.getStatusAutorizacao())
-            .numeroGuia(command.getNumeroGuia())
+            .numeroGuia(command.getNumeroGuiaAutorizacao())
             .senha(command.getSenhaAutorizacao())
             .validade(command.getValidadeAutorizacao())
             .tipoAcomodacao(command.getTipoAcomodacao())

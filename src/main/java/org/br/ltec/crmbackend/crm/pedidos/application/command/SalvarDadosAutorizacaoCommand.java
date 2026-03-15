@@ -10,7 +10,7 @@ import java.util.UUID;
 public class SalvarDadosAutorizacaoCommand {
   UUID pedidoId;
   String statusAutorizacao;
-  String numeroGuia;
+  String numeroGuiaAutorizacao;
   String senhaAutorizacao;
   LocalDate validadeAutorizacao;
   String tipoAcomodacao;

@@ -11,6 +11,8 @@ public class StatusPedido {
     APROVADO("Aprovado", "Approved"),              // 🔥 NOVO
     REJEITADO("Rejeitado", "Rejected"),            // Já existia
     AGENDAR("Agendar", "Scheduled"),
+    AGUARDANDO_APROVACAO_AGENDAMENTO("Aguardado aprovação do agendamento", "Approve scheduled"),
+    AGENDAMENTO_REPROVADO("Aprovação do agendamento reprovado", "Rejected approve"),
     AGENDADO("Agendado", "Scheduled"),
     CONFIRMADO("Confirmado", "Confirmed"),
     EM_PROGRESSO("Em Progresso", "In Progress"),
@@ -35,22 +37,50 @@ public class StatusPedido {
 
     public boolean podeSerAtualizadoPara(Tipo novoStatus) {
       return switch (this) {
-        case RASCUNHO -> novoStatus == PENDENTE || novoStatus == CANCELADO;
-        case PENDENTE -> novoStatus == EM_ANALISE || novoStatus == CANCELADO;
-        case EM_ANALISE -> novoStatus == APROVADO || novoStatus == REJEITADO || novoStatus == CANCELADO; // 🔥 AGORA VAI PARA APROVADO
-        case APROVADO -> novoStatus == AGENDAR || novoStatus == CANCELADO; // 🔥 NOVO: Aprovado pode ir para agendado
-        case REJEITADO -> novoStatus == EM_ANALISE || novoStatus == CANCELADO; // 🔥 CORRIGIDO: Rejeitado pode voltar para análise
-        case AGENDAR -> novoStatus == CONFIRMADO || novoStatus == CANCELADO;
-        case AGENDADO -> novoStatus == CONFIRMADO || novoStatus == CANCELADO;
-        case CONFIRMADO -> novoStatus == EM_PROGRESSO || novoStatus == CANCELADO;
-        case EM_PROGRESSO -> novoStatus == REALIZADO || novoStatus == CANCELADO;
-        case REALIZADO -> false; // Não pode mudar após realizado
-        case CANCELADO -> false; // Não pode mudar após cancelado
+        case RASCUNHO ->
+                novoStatus == PENDENTE || novoStatus == CANCELADO;
+
+        case PENDENTE ->
+                novoStatus == EM_ANALISE || novoStatus == CANCELADO;
+
+        case EM_ANALISE ->
+                novoStatus == APROVADO || novoStatus == REJEITADO || novoStatus == CANCELADO;
+
+        case APROVADO ->
+                novoStatus == AGENDAR || novoStatus == CANCELADO;
+
+        case REJEITADO ->
+                novoStatus == EM_ANALISE || novoStatus == CANCELADO;
+
+        case AGENDAR ->
+                novoStatus == AGUARDANDO_APROVACAO_AGENDAMENTO || novoStatus == CANCELADO;
+
+        case AGUARDANDO_APROVACAO_AGENDAMENTO ->
+                novoStatus == AGENDADO ||
+                        novoStatus == AGENDAMENTO_REPROVADO ||
+                        novoStatus == AGENDAR ||
+                        novoStatus == CANCELADO;
+
+        case AGENDAMENTO_REPROVADO ->
+                novoStatus == AGENDAR ||
+                        novoStatus == CANCELADO;
+
+        case AGENDADO ->
+                novoStatus == CONFIRMADO || novoStatus == CANCELADO;
+
+        case CONFIRMADO ->
+                novoStatus == EM_PROGRESSO || novoStatus == CANCELADO;
+
+        case EM_PROGRESSO ->
+                novoStatus == REALIZADO || novoStatus == CANCELADO;
+
+        case REALIZADO -> false;
+        case CANCELADO -> false;
       };
     }
 
     public boolean isFinal() {
-      return this == REALIZADO || this == CANCELADO; // 🔥 REJEITADO NÃO É MAIS FINAL!
+      return this == REALIZADO || this == CANCELADO;
     }
 
     public boolean isAtivo() {

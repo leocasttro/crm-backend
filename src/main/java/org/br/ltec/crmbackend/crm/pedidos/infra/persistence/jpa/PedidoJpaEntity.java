@@ -33,7 +33,7 @@ import java.util.UUID;
 public class PedidoJpaEntity implements Persistable<UUID> {
 
   @Id
-  @Column(name = "id", nullable = false, updatable = false)
+  @Column(name = "id", updatable = false)
   private UUID id;
 
   @Transient
@@ -73,14 +73,14 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   }
 
   // Referência ao paciente
-  @Column(name = "paciente_id", nullable = false)
+  @Column(name = "paciente_id")
   private UUID pacienteId;
 
   // Médico Solicitante
-  @Column(name = "medico_solicitante_nome", nullable = false, length = 100)
+  @Column(name = "medico_solicitante_nome", length = 100)
   private String medicoSolicitanteNome;
 
-  @Column(name = "medico_solicitante_crm", nullable = false, length = 20)
+  @Column(name = "medico_solicitante_crm", length = 50)
   private String medicoSolicitanteCrm;
 
   @Column(name = "medico_solicitante_especialidade", length = 100)
@@ -90,17 +90,17 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   @Column(name = "medico_executor_nome", length = 100)
   private String medicoExecutorNome;
 
-  @Column(name = "medico_executor_crm", length = 20)
+  @Column(name = "medico_executor_crm", length = 50)
   private String medicoExecutorCrm;
 
   @Column(name = "medico_executor_especialidade", length = 100)
   private String medicoExecutorEspecialidade;
 
   // Procedimento
-  @Column(name = "procedimento_codigo_tuss", nullable = false, length = 20)
+  @Column(name = "procedimento_codigo_tuss", length = 50)
   private String procedimentoCodigoTuss;
 
-  @Column(name = "procedimento_descricao", nullable = false, length = 500)
+  @Column(name = "procedimento_descricao", length = 500)
   private String procedimentoDescricao;
 
   @Column(name = "procedimento_categoria", length = 100)
@@ -123,7 +123,7 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   private String orientacoes;
 
   // 🔥 NOVO CAMPO: Telefone do paciente
-  @Column(name = "telefone_paciente", length = 20)
+  @Column(name = "telefone_paciente", length = 50)
   private String telefonePaciente;
 
   // 🔥 NOVO CAMPO: Endereço do paciente
@@ -131,13 +131,13 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   private String enderecoPaciente;
 
   // Convênio
-  @Column(name = "convenio_nome", nullable = false, length = 100)
+  @Column(name = "convenio_nome", length = 100)
   private String convenioNome;
 
-  @Column(name = "convenio_numero_carteira", nullable = false, length = 50)
+  @Column(name = "convenio_numero_carteira", length = 50)
   private String convenioNumeroCarteira;
 
-  @Column(name = "convenio_validade_carteira", nullable = false)
+  @Column(name = "convenio_validade_carteira")
   private LocalDate convenioValidadeCarteira;
 
   @Column(name = "convenio_tipo_plano", length = 50)
@@ -164,17 +164,23 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   @Column(name = "agendamento_data_hora")
   private LocalDateTime agendamentoDataHora;
 
-  @Column(name = "agendamento_sala", length = 50)
-  private String agendamentoSala;
+  @Column(name = "agendamento_local", length = 50)
+  private String agendamentoLocal;
+
+  @Column(name = "agendamento_hospital", length = 50)
+  private String hospital;
+
+  @Column(name = "agendamento_fornecedor")
+  private String fornecedor;
+
+  @Column(name = "agendamento_risco_cirurgico")
+  private String riscoCirurgico;
 
   @Column(name = "agendamento_duracao_estimada")
   private Integer agendamentoDuracaoEstimada;
 
-  @Column(name = "agendamento_observacoes", columnDefinition = "TEXT")
-  private String agendamentoObservacoes;
-
   // Status
-  @Column(name = "status", nullable = false, length = 20)
+  @Column(name = "status", length = 50)
   private String status;
 
   @Column(name = "status_observacao", columnDefinition = "TEXT")
@@ -184,14 +190,14 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   private String statusUsuarioAlteracao;
 
   // Prioridade
-  @Column(name = "prioridade", nullable = false, length = 20)
+  @Column(name = "prioridade", length = 50)
   private String prioridade;
 
   @Column(name = "prioridade_justificativa", columnDefinition = "TEXT")
   private String prioridadeJustificativa;
 
   // Lateralidade
-  @Column(name = "lateralidade", nullable = false, length = 20)
+  @Column(name = "lateralidade", length = 50)
   private String lateralidade;
 
   // Observações (armazenadas como JSON array)
@@ -203,19 +209,19 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   private String documentosAnexados;
 
   // Metadados
-  @Column(name = "criado_em", nullable = false)
+  @Column(name = "criado_em")
   private LocalDateTime criadoEm;
 
   @Column(name = "atualizado_em")
   private LocalDateTime atualizadoEm;
 
-  @Column(name = "usuario_criacao", nullable = false, length = 100)
+  @Column(name = "usuario_criacao", length = 100)
   private String usuarioCriacao;
 
   @Column(name = "usuario_atualizacao", length = 100)
   private String usuarioAtualizacao;
 
-  @Column(name = "data_pedido", nullable = false)
+  @Column(name = "data_pedido")
   private LocalDate dataPedido;
 
   // Dados da guia/internação
@@ -270,6 +276,9 @@ public class PedidoJpaEntity implements Persistable<UUID> {
 
   @Column(name = "consulta_pre_observacoes_especiais", columnDefinition = "TEXT")
   private String consultaPreObservacoesEspeciais;
+
+  @Column(name = "consulta_pre_local", columnDefinition = "TEXT")
+  private String consultaPreLocal;
 
   @Column(name = "status_autorizacao", columnDefinition = "TEXT")
   private String statusAutorizacao;

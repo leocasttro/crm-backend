@@ -27,7 +27,8 @@ public class AgendarConsultaPreUseCaseImpl implements AgendarConsultaPreUseCase 
     pedido.agendarConsultaPre(
             command.getDataHora(),
             command.getCuidados(),
-            command.getObservacoesEspeciais()
+            command.getObservacoesEspeciais(),
+            command.getLocal()
     );
 
     // 3. Salvar e retornar

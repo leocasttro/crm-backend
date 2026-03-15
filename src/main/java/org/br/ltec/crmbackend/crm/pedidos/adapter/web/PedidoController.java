@@ -29,7 +29,6 @@ public class PedidoController {
 
   private final CreatePedidoUseCase createUseCase;
   private final FindPedidoUseCase findUseCase;
-  private final AgendarPedidoUseCase agendarUseCase;
   private final StatusPedidoUseCase statusUseCase;
   private final UpdatePedidoUseCase updatePedidoUseCase;
   private final CreatePedidoFromPdfUseCase createFromPdfUseCase;
@@ -37,6 +36,9 @@ public class PedidoController {
   private final CreatePacienteUseCase createPacienteUseCase;
   private final AtualizarStatusPedidoUseCase atualizarStatusPedidoUseCase;
   private final AgendarPedidoUseCase agendarPedidoUseCase;
+  private final AprovarAgendamentoUseCase aprovarAgendamentoUseCase;
+  private final RejeitarAgendamentoUseCase rejeitarAgendamentoUseCase;
+  private final AjustarAgendamentoUseCase ajustarAgendamentoUseCase;
   private final SalvarDadosAutorizacaoUseCase salvarDadosAutorizacaoUseCase;
 
   @PostMapping
@@ -132,19 +134,69 @@ public class PedidoController {
     return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
-  @PostMapping("/{pedidoId}/agendar")
-  public ResponseEntity<PedidoResponse> agendarPedido(
+  @PostMapping("/{pedidoId}/agendamento/solicitar")
+  public ResponseEntity<PedidoResponse> solicitarAgendamento(
           @PathVariable String pedidoId,
           @RequestBody AgendamentoRequest request) {
 
     var command = AgendamentoPedidoCommand.builder()
             .pedidoId(pedidoId)
             .dataAgendamento(request.getDataAgendamento())
-            .observacao(request.getObservacao())
+            .local(request.getLocal())
+            .hospital(request.getHospital())
+            .fornecedor(request.getFornecedor())
+            .riscoCirurgico(request.getRiscoCirurgico())
+            .duracaoEstimada(request.getDuracaoEstimada())
             .build();
 
     PedidoCirurgico pedido = agendarPedidoUseCase.execute(command);
+    return ResponseEntity.ok(toResponse(pedido));
+  }
 
+  @PostMapping("/{pedidoId}/agendamento/aprovar")
+  public ResponseEntity<PedidoResponse> aprovarAgendamento(
+          @PathVariable String pedidoId,
+          @RequestBody AgendamentoAprovadoRequest request) {
+
+    PedidoCirurgico pedido = aprovarAgendamentoUseCase.execute(
+            pedidoId,
+            getUsuarioLogado(),
+            request.getObservacao()
+    );
+
+    return ResponseEntity.ok(toResponse(pedido));
+  }
+
+  @PostMapping("/{pedidoId}/agendamento/rejeitar")
+  public ResponseEntity<PedidoResponse> rejeitarAgendamento(
+          @PathVariable String pedidoId,
+          @RequestBody AgendamentoRejeicaoRequest request) {
+
+    PedidoCirurgico pedido = rejeitarAgendamentoUseCase.execute(
+            pedidoId,
+            getUsuarioLogado(),
+            request.getMotivo()
+    );
+
+    return ResponseEntity.ok(toResponse(pedido));
+  }
+
+  @PostMapping("/{pedidoId}/agendamento/ajustar")
+  public ResponseEntity<PedidoResponse> ajustarAgendamento(
+          @PathVariable String pedidoId,
+          @RequestBody AgendamentoRequest request) {
+
+    var command = AgendamentoPedidoCommand.builder()
+            .pedidoId(pedidoId)
+            .dataAgendamento(request.getDataAgendamento())
+            .local(request.getLocal())
+            .hospital(request.getHospital())
+            .fornecedor(request.getFornecedor())
+            .riscoCirurgico(request.getRiscoCirurgico())
+            .duracaoEstimada(request.getDuracaoEstimada())
+            .build();
+
+    PedidoCirurgico pedido = ajustarAgendamentoUseCase.execute(command);
     return ResponseEntity.ok(toResponse(pedido));
   }
 
@@ -339,7 +391,7 @@ public class PedidoController {
       SalvarDadosAutorizacaoCommand command = new SalvarDadosAutorizacaoCommand(
               id,
               request.getStatusAutorizacao(),
-              request.getNumeroGuia(),
+              request.getNumeroGuiaAutorizacao(),
               request.getSenhaAutorizacao(),
               request.getValidadeAutorizacao(),
               request.getTipoAcomodacao(),
@@ -385,7 +437,13 @@ public class PedidoController {
             .criadoEm(p.getCriadoEm())
             .atualizadoEm(p.getAtualizadoEm())
             .dataPedido(p.getDataPedido())
-            .agendadoPara(p.temAgendamento() ? p.getAgendamento().getDataHora() : null)
+
+            // Agendar cirurgia
+            .agendamentoDataHora(p.temAgendamento() ? p.getAgendamento().getDataHora() : null)
+            .agendamentoLocal(p.temAgendamento() ? p.getAgendamento().getLocal() : null)
+            .agendamentoHospital(p.temAgendamento() ? p.getAgendamento().getHospital() : null)
+            .agendamentoFornecedor(p.temAgendamento() ? p.getAgendamento().getFornecedor() : null)
+            .agendamentoRiscoCirurgico(p.temAgendamento() ? p.getAgendamento().getRiscoCirurgico() : null)
 
             // Procedimento
             .procedimento(p.getProcedimento().getDescricao())
@@ -455,6 +513,7 @@ public class PedidoController {
             .consultaPreDataHora(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getDataHora() : null)
             .consultaPreCuidados(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getCuidados() : null)
             .consultaPreObservacoesEspeciais(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().getObservacoesEspeciais() : null)
+            .consultaPreLocal(p.getConsultaPreOperatoria() != null ? p.getConsultaPreOperatoria().local() : null)
 
             .statusAutorizacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getStatus() != null ?
                     p.getDadosAutorizacao().getStatus().getValor() : null)
