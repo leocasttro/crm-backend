@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 public class AgendarConsultaPreCommand {
   private String pedidoId;
   private LocalDateTime dataHora;
+  private String local;
   private String cuidados;
   private String horarios;
   private String observacoesEspeciais;

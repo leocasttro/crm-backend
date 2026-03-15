@@ -27,6 +27,7 @@ public class ConsultaPreController {
             .cuidados(request.getCuidados())
             .horarios(request.getHorarios())
             .observacoesEspeciais(request.getObservacoesEspeciais())
+            .local(request.getLocal())
             .usuario(getUsuarioLogado())
             .build();
 

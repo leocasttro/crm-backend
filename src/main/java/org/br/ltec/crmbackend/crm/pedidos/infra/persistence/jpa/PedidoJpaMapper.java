@@ -87,15 +87,18 @@ public class PedidoJpaMapper {
     // Agendamento
     if (pedido.getAgendamento() != null) {
       entity.setAgendamentoDataHora(pedido.getAgendamento().getDataHora());
-      entity.setAgendamentoSala(pedido.getAgendamento().getSala());
+      entity.setAgendamentoLocal(pedido.getAgendamento().getLocal());
+      entity.setHospital(pedido.getAgendamento().getHospital());
+      entity.setFornecedor(pedido.getAgendamento().getFornecedor());
+      entity.setRiscoCirurgico(pedido.getAgendamento().getRiscoCirurgico());
       entity.setAgendamentoDuracaoEstimada(pedido.getAgendamento().getDuracaoEstimada());
-      entity.setAgendamentoObservacoes(pedido.getAgendamento().getObservacoes());
     }
 
     if (pedido.getConsultaPreOperatoria() != null) {
       entity.setConsultaPreDataHora(pedido.getConsultaPreOperatoria().getDataHora());
       entity.setConsultaPreCuidados(pedido.getConsultaPreOperatoria().getCuidados());
       entity.setConsultaPreObservacoesEspeciais(pedido.getConsultaPreOperatoria().getObservacoesEspeciais());
+      entity.setConsultaPreLocal(pedido.getConsultaPreOperatoria().local());
     }
 
     // Status
@@ -196,9 +199,11 @@ public class PedidoJpaMapper {
       if (entity.getAgendamentoDataHora() != null) {
         agendamento = DataHoraAgendamento.fromDatabase(
                 entity.getAgendamentoDataHora(),
-                entity.getAgendamentoSala(),
-                entity.getAgendamentoDuracaoEstimada(),
-                entity.getAgendamentoObservacoes()
+                entity.getAgendamentoLocal(),
+                entity.getHospital(),
+                entity.getFornecedor(),
+                entity.getRiscoCirurgico(),
+                entity.getAgendamentoDuracaoEstimada()
         );
       }
 
@@ -299,7 +304,8 @@ public class PedidoJpaMapper {
         ConsultaPreOperatoria consultaPre = ConsultaPreOperatoria.fromDatabase(
                 entity.getConsultaPreDataHora(),
                 entity.getConsultaPreCuidados(),
-                entity.getConsultaPreObservacoesEspeciais()
+                entity.getConsultaPreObservacoesEspeciais(),
+                entity.getConsultaPreLocal()
         );
         pedido.setConsultaPreOperatoria(consultaPre);
       }

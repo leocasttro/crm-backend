@@ -96,9 +96,11 @@ public class CreatePedidoUseCase {
       if (command.getAgendamentoDataHora() != null) {
         agendamento = DataHoraAgendamento.criar(
                 command.getAgendamentoDataHora(),
-                command.getAgendamentoSala(),
-                command.getAgendamentoDuracaoEstimada(),
-                command.getAgendamentoObservacoes()
+                command.getAgendamentoLocal(),
+                command.getHospital(),
+                command.getFornecedor(),
+                command.getRiscoCirurgico(),
+                command.getAgendamentoDuracaoEstimada()
         );
       }
 

@@ -62,7 +62,10 @@ public class CreatePedidoCommand {
   private String sexoPaciente;
 
   private LocalDateTime agendamentoDataHora;
-  private String agendamentoSala;
+  private String agendamentoLocal;
+  private String hospital;
+  private String fornecedor;
+  private String riscoCirurgico;
   private Integer agendamentoDuracaoEstimada;
   private String agendamentoObservacoes;
 
@@ -204,8 +207,17 @@ public class CreatePedidoCommand {
   public LocalDateTime getAgendamentoDataHora() { return agendamentoDataHora; }
   public void setAgendamentoDataHora(LocalDateTime agendamentoDataHora) { this.agendamentoDataHora = agendamentoDataHora; }
 
-  public String getAgendamentoSala() { return agendamentoSala; }
-  public void setAgendamentoSala(String agendamentoSala) { this.agendamentoSala = agendamentoSala; }
+  public String getAgendamentoLocal() { return agendamentoLocal; }
+  public void setAgendamentoLocal(String agendamentoLocal) { this.agendamentoLocal = agendamentoLocal; }
+
+  public String getHospital() { return hospital; }
+  public void setHospital(String hospital) { this.hospital = hospital; }
+
+  public String getFornecedor() { return fornecedor; }
+  public void setFornecedor(String fornecedor) { this.fornecedor = fornecedor; }
+
+  public String getRiscoCirurgico() { return riscoCirurgico; }
+  public void setRiscoCirurgico(String riscoCirurgico) { this.riscoCirurgico = riscoCirurgico; }
 
   public Integer getAgendamentoDuracaoEstimada() { return agendamentoDuracaoEstimada; }
   public void setAgendamentoDuracaoEstimada(Integer agendamentoDuracaoEstimada) { this.agendamentoDuracaoEstimada = agendamentoDuracaoEstimada; }

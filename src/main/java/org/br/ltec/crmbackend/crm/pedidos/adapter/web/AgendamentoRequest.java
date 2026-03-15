@@ -11,5 +11,9 @@ public class AgendamentoRequest {
 
   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
   private LocalDateTime dataAgendamento;
-  private String observacao;
+  private String local;
+  private String hospital;
+  private String fornecedor;
+  private String riscoCirurgico;
+  private Integer duracaoEstimada;
 }

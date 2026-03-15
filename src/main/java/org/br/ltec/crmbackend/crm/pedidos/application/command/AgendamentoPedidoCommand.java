@@ -13,5 +13,10 @@ import java.util.UUID;
 public class AgendamentoPedidoCommand {
   String pedidoId;
   LocalDateTime dataAgendamento;
+  String local;
+  String hospital;
+  String fornecedor;
+  String riscoCirurgico;
   String observacao;
+  Integer duracaoEstimada;
 }

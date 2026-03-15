@@ -22,7 +22,14 @@ public class PedidoResponse {
   private LocalDateTime atualizadoEm;
   private LocalDate dataPedido;
   private LocalDate dataSolicitacao;
-  private LocalDateTime agendadoPara;
+
+  //Agendar cirurgia
+  private LocalDateTime agendamentoDataHora;
+  private String agendamentoHospital;
+  private String agendamentoLocal;
+  private String agendamentoObservacao;
+  private String agendamentoRiscoCirurgico;
+  private String agendamentoFornecedor;
 
   // Procedimento (campo antigo - manter para compatibilidade)
   private String procedimento;
@@ -105,6 +112,7 @@ public class PedidoResponse {
   private LocalDateTime consultaPreDataHora;
   private String consultaPreCuidados;
   private String consultaPreObservacoesEspeciais;
+  private String consultaPreLocal;
 
   private String statusAutorizacao;
   private String numeroGuiaAutorizacao;

@@ -78,22 +78,22 @@ public class PacienteJpaEntity implements Persistable<UUID> {
   @Column(name = "primeiro_nome", nullable = false, length = 50)
   private String primeiroNome;
 
-  @Column(name = "sobrenome", nullable = false, length = 50)
+  @Column(name = "sobrenome", length = 50)
   private String sobrenome;
 
-  @Column(name = "nome_completo", nullable = false, length = 100)
+  @Column(name = "nome_completo", length = 100)
   private String nomeCompleto;
 
-  @Column(name = "documento_numero", nullable = false, unique = true, length = 20)
+  @Column(name = "documento_numero", unique = true, length = 20)
   private String documentoNumero;
 
-  @Column(name = "documento_tipo", nullable = false, length = 10)
+  @Column(name = "documento_tipo", length = 10)
   private String documentoTipo;
 
-  @Column(name = "email", nullable = false, unique = true, length = 255)
+  @Column(name = "email", unique = true, length = 255)
   private String email;
 
-  @Column(name = "data_nascimento", nullable = false)
+  @Column(name = "data_nascimento")
   private LocalDate dataNascimento;
 
   @Column(name = "idade")
@@ -144,10 +144,10 @@ public class PacienteJpaEntity implements Persistable<UUID> {
   @Column(name = "possui_whatsapp")
   private Boolean possuiWhatsApp;
 
-  @Column(name = "ativo", nullable = false)
+  @Column(name = "ativo")
   private Boolean ativo = true;
 
-  @Column(name = "criado_em", nullable = false)
+  @Column(name = "criado_em")
   private LocalDate criadoEm = LocalDate.now();
 
   @Column(name = "atualizado_em")

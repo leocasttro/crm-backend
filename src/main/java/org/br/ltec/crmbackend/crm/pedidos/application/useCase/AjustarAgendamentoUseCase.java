@@ -1,3 +1,4 @@
+// AjustarAgendamentoUseCase.java
 package org.br.ltec.crmbackend.crm.pedidos.application.useCase;
 
 import lombok.RequiredArgsConstructor;
@@ -12,11 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AgendarPedidoUseCaseImpl implements AgendarPedidoUseCase {
+public class AjustarAgendamentoUseCase {
 
   private final PedidoRepository pedidoRepository;
 
-  @Override
   public PedidoCirurgico execute(AgendamentoPedidoCommand command) {
     PedidoId pedidoId = PedidoId.fromString(command.getPedidoId());
 
@@ -32,7 +32,14 @@ public class AgendarPedidoUseCaseImpl implements AgendarPedidoUseCase {
             command.getDuracaoEstimada()
     );
 
-    pedido.agendar(dataAgendamento);
+    pedido.ajustarAgendamento(dataAgendamento, "usuario");
+
+    if (command.getObservacao() != null && !command.getObservacao().trim().isEmpty()) {
+      pedido.adicionarObservacao(
+              "Ajuste no agendamento: " + command.getObservacao(),
+              "usario"
+      );
+    }
 
     return pedidoRepository.salvar(pedido);
   }

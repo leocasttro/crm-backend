@@ -10,4 +10,5 @@ public class AgendarConsultaPreRequest {
   private String cuidados;
   private String horarios;
   private String observacoesEspeciais;
+  private String local;
 }

@@ -254,9 +254,7 @@ public class PedidoCirurgico {
   /**
    * Agendar consulta pré-operatória
    */
-  public void agendarConsultaPre(LocalDateTime dataHora, String cuidados, String observacoesEspeciais) {
-
-    // Validar se pode agendar consulta pré
+  public void agendarConsultaPre(LocalDateTime dataHora, String cuidados, String observacoesEspeciais, String local) {
     if (this.status.getTipo() != StatusPedido.Tipo.AGENDADO) {
       throw new IllegalStateException(
               "Só é possível agendar consulta pré após o agendamento da cirurgia. " +
@@ -265,7 +263,7 @@ public class PedidoCirurgico {
     }
 
     this.consultaPreOperatoria = ConsultaPreOperatoria.criar(
-            dataHora, cuidados, observacoesEspeciais
+            dataHora, cuidados, observacoesEspeciais, local
     );
 
     this.atualizadoEm = LocalDateTime.now();
@@ -311,9 +309,94 @@ public class PedidoCirurgico {
     atualizarStatus(StatusPedido.Tipo.EM_ANALISE, usuario, "Análise iniciada");
   }
 
-  public void agendar(DataHoraAgendamento agendamento, String usuario) {
-    this.agendamento = agendamento;
-    atualizarStatus(StatusPedido.Tipo.AGENDAR, usuario, "Pedido agendado");
+  public void agendar(DataHoraAgendamento dataAgendamento) {
+
+    if (this.status.getTipo() == StatusPedido.Tipo.REALIZADO ||
+            this.status.getTipo() == StatusPedido.Tipo.CANCELADO) {
+      throw new IllegalStateException(
+              String.format("Não é possível agendar um pedido com status final: %s",
+                      this.status.getTipo().getDescricao())
+      );
+    }
+
+    this.agendamento = dataAgendamento; // ← linha que estava faltando
+
+    this.status = new StatusPedido(
+            StatusPedido.Tipo.AGUARDANDO_APROVACAO_AGENDAMENTO,
+            "Agendamento solicitado, aguardando aprovação",
+            "usuario"
+    );
+
+    this.atualizadoEm = LocalDateTime.now();
+    this.usuarioAtualizacao = "usuario";
+  }
+
+  /**
+   * Aprova o agendamento (ação do gestor/supervisor)
+   * Vai direto para AGENDADO (conforme seu fluxo)
+   */
+  public void aprovarAgendamento(String usuario, String observacao) {
+    if (this.status.getTipo() != StatusPedido.Tipo.AGUARDANDO_APROVACAO_AGENDAMENTO) {
+      throw new IllegalStateException(
+              String.format("Só é possível aprovar agendamento de pedidos em AGUARDANDO_APROVACAO_AGENDAMENTO. Status atual: %s",
+                      this.status.getTipo().getDescricao())
+      );
+    }
+
+    this.status = new StatusPedido(
+            StatusPedido.Tipo.AGENDADO,
+            observacao != null ? observacao : "Agendamento aprovado",
+            usuario
+    );
+
+    this.atualizadoEm = LocalDateTime.now();
+    this.usuarioAtualizacao = usuario;
+    adicionarObservacao("Agendamento aprovado", usuario);
+  }
+
+  /**
+   * Rejeita o agendamento (ação do gestor/supervisor)
+   */
+  public void rejeitarAgendamento(String usuario, String motivo) {
+    if (this.status.getTipo() != StatusPedido.Tipo.AGUARDANDO_APROVACAO_AGENDAMENTO) {
+      throw new IllegalStateException(
+              String.format("Só é possível rejeitar agendamento de pedidos em AGUARDANDO_APROVACAO_AGENDAMENTO. Status atual: %s",
+                      this.status.getTipo().getDescricao())
+      );
+    }
+
+    this.status = new StatusPedido(
+            StatusPedido.Tipo.AGENDAMENTO_REPROVADO,
+            motivo != null ? motivo : "Agendamento rejeitado",
+            usuario
+    );
+
+    this.atualizadoEm = LocalDateTime.now();
+    this.usuarioAtualizacao = usuario;
+    adicionarObservacao("Agendamento rejeitado: " + motivo, usuario);
+  }
+
+  /**
+   * Ajusta o agendamento após rejeição (volta para AGENDAR)
+   */
+  public void ajustarAgendamento(DataHoraAgendamento novosDados, String usuario) {
+    if (this.status.getTipo() != StatusPedido.Tipo.AGENDAMENTO_REPROVADO) {
+      throw new IllegalStateException(
+              String.format("Só é possível ajustar agendamento de pedidos reprovados. Status atual: %s",
+                      this.status.getTipo().getDescricao())
+      );
+    }
+
+    this.agendamento = novosDados;
+    this.status = new StatusPedido(
+            StatusPedido.Tipo.AGENDAR,
+            "Agendamento ajustado após rejeição",
+            usuario
+    );
+
+    this.atualizadoEm = LocalDateTime.now();
+    this.usuarioAtualizacao = usuario;
+    adicionarObservacao("Agendamento ajustado após rejeição", usuario);
   }
 
   public void confirmar(String usuario, String observacoesConfirmacao) {

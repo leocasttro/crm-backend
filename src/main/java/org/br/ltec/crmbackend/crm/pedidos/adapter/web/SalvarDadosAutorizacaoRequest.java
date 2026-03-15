@@ -6,7 +6,7 @@ import java.time.LocalDate;
 @Data
 public class SalvarDadosAutorizacaoRequest {
   private String statusAutorizacao;
-  private String numeroGuia;
+  private String numeroGuiaAutorizacao;
   private String senhaAutorizacao;
   private LocalDate validadeAutorizacao;
   private String tipoAcomodacao;
