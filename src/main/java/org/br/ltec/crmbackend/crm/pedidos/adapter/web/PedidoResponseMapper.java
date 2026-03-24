@@ -1,5 +1,6 @@
 package org.br.ltec.crmbackend.crm.pedidos.adapter.web;
 
+import org.br.ltec.crmbackend.crm.pedidos.domain.model.OpmeItem;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoCirurgico;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Procedimento;
 import org.springframework.stereotype.Component;
@@ -10,7 +11,23 @@ import java.util.stream.Collectors;
 @Component
 public class PedidoResponseMapper {
 
+  private OpmeItemResponse toOpmeItemResponse(OpmeItem item) {
+    if (item == null) return null;
+    return OpmeItemResponse.builder()
+            .id(item.getId().getValue().toString())
+            .descricao(item.getDescricao())
+            .quantidade(item.getQuantidade())
+            .marcasAceitas(item.getMarcasAceitas())
+            .marcasNegadas(item.getMarcasNegadas())
+            .observacao(item.getObservacao())
+            .build();
+  }
+
   public PedidoResponse toResponse(PedidoCirurgico p) {
+    List<OpmeItemResponse> opmeItens = p.getOpmeItens().stream()
+            .map(this::toOpmeItemResponse)
+            .collect(Collectors.toList());
+
     return PedidoResponse.builder()
             .id(p.getId().getValue().toString())
             .pacienteId(p.getPacienteId().getValue().toString())
@@ -81,10 +98,26 @@ public class PedidoResponseMapper {
                     p.getDadosAutorizacao().getValidade().getValor() : null)
             .tipoAcomodacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getTipoAcomodacao() != null ?
                     p.getDadosAutorizacao().getTipoAcomodacao().getValor() : null)
+            .opmeItens(opmeItens)
             .build();
   }
 
   public PedidoDetalhadoResponse toDetalhadoResponse(PedidoCirurgico p) {
+    System.out.println("=== Mapeando PedidoDetalhadoResponse ===");
+    System.out.println("Pedido ID: " + p.getId().getValue());
+    System.out.println("OPME items count: " + p.getOpmeItens().size());
+
+    p.getOpmeItens().forEach(item -> {
+      System.out.println("  - ID: " + item.getId().getValue());
+      System.out.println("    Descrição: " + item.getDescricao());
+      System.out.println("    Quantidade: " + item.getQuantidade());
+      System.out.println("    Marcas Aceitas: " + item.getMarcasAceitas());
+    });
+
+    List<OpmeItemResponse> opmeItens = p.getOpmeItens().stream()
+            .map(this::toOpmeItemResponse)
+            .collect(Collectors.toList());
+
     return PedidoDetalhadoResponse.builder()
             .id(p.getId().getValue().toString())
             .pacienteId(p.getPacienteId().getValue().toString())
@@ -120,6 +153,7 @@ public class PedidoResponseMapper {
                     p.getDadosAutorizacao().getValidade().getValor() : null)
             .tipoAcomodacao(p.getDadosAutorizacao() != null && p.getDadosAutorizacao().getTipoAcomodacao() != null ?
                     p.getDadosAutorizacao().getTipoAcomodacao().getValor() : null)
+            .opmeItens(opmeItens)
             .build();
   }
 

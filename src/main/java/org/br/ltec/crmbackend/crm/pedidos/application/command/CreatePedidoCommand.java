@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.br.ltec.crmbackend.crm.paciente.application.command.CreatePacienteCommand;
+import org.br.ltec.crmbackend.crm.pedidos.application.useCase.PedidoExtraido;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Lateralidade;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Prioridade;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.Procedimento;
@@ -84,6 +85,7 @@ public class CreatePedidoCommand {
 
   private List<String> observacoes;
   private List<String> documentosAnexados;
+  private List<PedidoExtraido.OpmeItemExtraido> opmeItens = new ArrayList<>();
 
   public CreatePedidoCommand() {
     this.status = StatusPedido.Tipo.PENDENTE;

@@ -108,6 +108,11 @@ public interface SpringDataPedidoJpaRepository extends JpaRepository<PedidoJpaEn
   @Query("SELECT p FROM PedidoJpaEntity p WHERE LOWER(p.medicoSolicitanteNome) LIKE LOWER(CONCAT('%', :nome, '%'))")
   List<PedidoJpaEntity> findByMedicoSolicitanteNomeContaining(@Param("nome") String nome);
 
+  @Query("SELECT p FROM PedidoJpaEntity p " +
+          "LEFT JOIN FETCH p.opmeItens " +
+          "WHERE p.id = :id")
+  Optional<PedidoJpaEntity> findByIdWithOpmeItens(@Param("id") UUID id);
+
   // Contagens
   long countByStatus(String status);
 

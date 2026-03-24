@@ -2,13 +2,17 @@ package org.br.ltec.crmbackend.crm.pedidos.application.useCase;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.br.ltec.crmbackend.crm.pedidos.adapter.web.ImportPedidoPdfResponse;
 import org.br.ltec.crmbackend.crm.pedidos.application.command.CreatePedidoCommand;
+import org.br.ltec.crmbackend.crm.pedidos.domain.model.OpmeItem;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoCirurgico;
+import org.br.ltec.crmbackend.crm.pedidos.domain.port.OpmeItemRepository;
 import org.br.ltec.crmbackend.crm.pedidos.domain.port.PedidoArquivoRepository;
 import org.br.ltec.crmbackend.crm.pedidos.domain.port.PedidoPdfExtractor;
+import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.OpmeItemId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,17 +24,20 @@ public class CreatePedidoFromPdfUseCase {
   private final PedidoExtraidoMapper pedidoExtraidoMapper;
   private final CreatePedidoUseCase createPedidoUseCase;
   private final PedidoArquivoRepository pedidoArquivoRepository;
+  private final OpmeItemRepository opmeItemRepository;
 
   public CreatePedidoFromPdfUseCase(
           PedidoPdfExtractor pedidoPdfExtractor,
           PedidoExtraidoMapper pedidoExtraidoMapper,
           CreatePedidoUseCase createPedidoUseCase,
-          PedidoArquivoRepository pedidoArquivoRepository
+          PedidoArquivoRepository pedidoArquivoRepository,
+          OpmeItemRepository opmeItemRepository
   ) {
     this.pedidoPdfExtractor = pedidoPdfExtractor;
     this.pedidoExtraidoMapper = pedidoExtraidoMapper;
     this.createPedidoUseCase = createPedidoUseCase;
     this.pedidoArquivoRepository = pedidoArquivoRepository;
+    this.opmeItemRepository = opmeItemRepository;
   }
 
   @Transactional
@@ -52,6 +59,21 @@ public class CreatePedidoFromPdfUseCase {
       CreatePedidoCommand createPedidoCommand = pedidoExtraidoMapper.toCreatePedidoCommand(extraido);
 
       PedidoCirurgico pedido = createPedidoUseCase.execute(createPedidoCommand);
+
+      if (extraido.getOpmeItens() != null && !extraido.getOpmeItens().isEmpty()) {
+        List<OpmeItem> itens = extraido.getOpmeItens().stream()
+                .map(opme -> OpmeItem.builder()
+                        .id(OpmeItemId.fromString(UUID.randomUUID().toString()))
+                        .pedidoId(pedido.getId())
+                        .descricao(opme.getDescricao())
+                        .quantidade(opme.getQuantidade())
+                        .marcasAceitas(opme.getMarcasAceitas())
+                        .marcasNegadas(opme.getMarcasNegadas())
+                        .build())
+                .collect(Collectors.toList());
+
+        opmeItemRepository.saveAll(itens);
+      }
 
       List<ImportPedidoPdfResponse.ProcedimentoResponse> procedimentosResponse =
               extraido.getProcedimentos().stream()

@@ -68,7 +68,7 @@ public class PedidoController {
   public ResponseEntity<PedidoDetalhadoResponse> buscarPorId(@PathVariable String id) {
     return ResponseEntity.ok(
             mapper.toDetalhadoResponse(
-                    findUseCase.findById(id)
+                    findUseCase.findByIdWithOpmeItens(id)  // ← usar este
                             .orElseThrow(() -> new RuntimeException("Pedido não encontrado: " + id))
             )
     );

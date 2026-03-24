@@ -29,6 +29,11 @@ public class FindPedidoUseCase {
     return pedidoRepository.buscarPorId(pedidoId);
   }
 
+  public Optional<PedidoCirurgico> findByIdWithOpmeItens(String id) {
+    PedidoId pedidoId = PedidoId.fromString(id);
+    return pedidoRepository.buscarPorIdComOpmeItens(pedidoId);
+  }
+
   // Busca por paciente
   public List<PedidoCirurgico> findByPacienteId(String pacienteId) {
     PacienteId id = PacienteId.fromString(pacienteId);

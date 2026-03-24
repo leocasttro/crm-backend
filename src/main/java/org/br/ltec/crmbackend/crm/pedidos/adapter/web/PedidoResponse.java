@@ -119,6 +119,7 @@ public class PedidoResponse {
   private String senhaAutorizacao;
   private LocalDate validadeAutorizacao;
   private String tipoAcomodacao;
+  private List<OpmeItemResponse> opmeItens;
 
   // 🔥 Classe interna para resposta de procedimentos
   @Data

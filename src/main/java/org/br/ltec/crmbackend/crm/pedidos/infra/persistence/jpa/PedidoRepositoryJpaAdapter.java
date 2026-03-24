@@ -35,6 +35,12 @@ public class PedidoRepositoryJpaAdapter implements PedidoRepository {
   }
 
   @Override
+  public Optional<PedidoCirurgico> buscarPorIdComOpmeItens(PedidoId id) {
+    return springDataPedidoJpaRepository.findByIdWithOpmeItens(id.getValue())
+            .map(pedidoJpaMapper::toDomain);
+  }
+
+  @Override
   public void flush() {
     entityManager.flush();
   }
@@ -219,6 +225,8 @@ public class PedidoRepositoryJpaAdapter implements PedidoRepository {
             .map(pedidoJpaMapper::toDomain)
             .collect(Collectors.toList());
   }
+
+
 
   @Override
   public void excluir(PedidoId id) {

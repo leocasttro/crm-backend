@@ -42,4 +42,5 @@ public class PedidoDetalhadoResponse {
   private String senhaAutorizacao;
   private LocalDate validadeAutorizacao;
   private String tipoAcomodacao;
+  private List<OpmeItemResponse> opmeItens;
 }

@@ -119,6 +119,7 @@ public interface PedidoRepository {
    */
   List<PedidoCirurgico> buscarTodos(int pagina, int tamanhoPagina);
 
+  Optional<PedidoCirurgico> buscarPorIdComOpmeItens(PedidoId id);
   /**
    * Exclui um pedido
    */
