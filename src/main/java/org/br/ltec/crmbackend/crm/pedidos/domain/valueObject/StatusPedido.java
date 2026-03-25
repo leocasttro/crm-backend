@@ -14,6 +14,8 @@ public class StatusPedido {
     AGUARDANDO_APROVACAO_AGENDAMENTO("Aguardado aprovação do agendamento", "Approve scheduled"),
     AGENDAMENTO_REPROVADO("Aprovação do agendamento reprovado", "Rejected approve"),
     AGENDADO("Agendado", "Scheduled"),
+    FATURAMENTO("Faturamento", "Billing"),
+    AGUARDANDO_POS_OPERATORIO("Aguardando Pós-Operatório", "Waiting Post-Op"),
     CONFIRMADO("Confirmado", "Confirmed"),
     EM_PROGRESSO("Em Progresso", "In Progress"),
     REALIZADO("Realizado", "Completed"),
@@ -67,6 +69,12 @@ public class StatusPedido {
 
         case AGENDADO ->
                 novoStatus == CONFIRMADO || novoStatus == CANCELADO;
+
+        case FATURAMENTO ->
+                novoStatus == AGUARDANDO_POS_OPERATORIO || novoStatus == CANCELADO;
+
+        case AGUARDANDO_POS_OPERATORIO ->
+                novoStatus == EM_PROGRESSO || novoStatus == CANCELADO;
 
         case CONFIRMADO ->
                 novoStatus == EM_PROGRESSO || novoStatus == CANCELADO;

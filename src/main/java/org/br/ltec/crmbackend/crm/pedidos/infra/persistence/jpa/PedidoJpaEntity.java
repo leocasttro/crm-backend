@@ -295,6 +295,10 @@ public class PedidoJpaEntity implements Persistable<UUID> {
   @Column(name = "tipo_acomodacao", columnDefinition = "TEXT")
   private String tipoAcomodacao;
 
+  @OneToMany(fetch = FetchType.LAZY)
+  @JoinColumn(name = "pedido_id", referencedColumnName = "id", insertable = false, updatable = false)
+  private List<OpmeItemJpaEntity> opmeItens = new ArrayList<>();
+
   private void calcularCamposDerivados() {
     this.temAgendamento = agendamentoDataHora != null;
     this.temCid = cidCodigo != null && !cidCodigo.trim().isEmpty();

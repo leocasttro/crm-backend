@@ -1,6 +1,7 @@
 package org.br.ltec.crmbackend.crm.pedidos.infra.persistence.jpa;
 
 import org.br.ltec.crmbackend.crm.paciente.domain.valueObject.PacienteId;
+import org.br.ltec.crmbackend.crm.pedidos.domain.model.OpmeItem;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoBuilder;
 import org.br.ltec.crmbackend.crm.pedidos.domain.model.PedidoCirurgico;
 import org.br.ltec.crmbackend.crm.pedidos.domain.valueObject.*;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class PedidoJpaMapper {
@@ -235,7 +237,15 @@ public class PedidoJpaMapper {
         documentosAnexados = Arrays.asList(entity.getDocumentosAnexados().split("\\|"));
       }
 
-      // 🔥 🔥 DADOS DE AUTORIZAÇÃO
+      // 🔥 Mapear OPME items
+      List<OpmeItem> opmeItens = new ArrayList<>();
+      if (entity.getOpmeItens() != null && !entity.getOpmeItens().isEmpty()) {
+        opmeItens = entity.getOpmeItens().stream()
+                .map(this::toOpmeItemDomain)
+                .collect(Collectors.toList());
+      }
+
+      // Dados de Autorização
       DadosAutorizacao dadosAutorizacao = null;
       if (entity.getStatusAutorizacao() != null ||
               entity.getNumeroGuiaAutorizacao() != null ||
@@ -259,6 +269,7 @@ public class PedidoJpaMapper {
               .comMedicoSolicitante(medicoSolicitante)
               .comMedicoExecutor(medicoExecutor)
               .comProcedimento(procedimento)
+              .comTodosProcedimentos(entity.getProcedimentos() != null ? entity.getProcedimentos() : new ArrayList<>())
               .comConvenio(convenio)
               .comCid(cid)
               .comAgendamento(agendamento)
@@ -291,13 +302,9 @@ public class PedidoJpaMapper {
               .comTipoInternacao(entity.getTipoInternacao())
               .comRegimeInternacao(entity.getRegimeInternacao())
               .comQtdDiariasSolicitadas(entity.getQtdDiariasSolicitadas())
-              .dadosAutorizacao(dadosAutorizacao)  // 🔥 NOVO
+              .comOpmeItens(opmeItens)  // 🔥 OPME ITEMS
+              .dadosAutorizacao(dadosAutorizacao)
               .build();
-
-      // ✅ SETAR A LISTA DE PROCEDIMENTOS
-      if (entity.getProcedimentos() != null) {
-        pedido.setTodosProcedimentos(entity.getProcedimentos());
-      }
 
       // 🔥 SETAR A CONSULTA PRÉ
       if (entity.getConsultaPreDataHora() != null) {
@@ -315,5 +322,26 @@ public class PedidoJpaMapper {
     } catch (Exception e) {
       throw new RuntimeException("Erro ao converter entidade para domínio: " + e.getMessage(), e);
     }
+  }
+
+  // 🔥 MÉTODO AUXILIAR PARA CONVERTER OPME ITEM JPA PARA DOMÍNIO
+  private OpmeItem toOpmeItemDomain(OpmeItemJpaEntity entity) {
+    if (entity == null) return null;
+
+    // Converter marcasAceitas de String para List<String>
+    List<String> marcasAceitas = new ArrayList<>();
+    if (entity.getMarcasAceitas() != null && !entity.getMarcasAceitas().isEmpty()) {
+      marcasAceitas = Arrays.asList(entity.getMarcasAceitas().split(","));
+    }
+
+    // Usar o builder para criar o OpmeItem
+    return OpmeItem.builder()
+            .id(OpmeItemId.fromString(entity.getId().toString()))
+            .descricao(entity.getDescricao())
+            .quantidade(entity.getQuantidade())
+            .marcasAceitas(marcasAceitas)
+            .marcasNegadas(entity.getMarcasNegadas())
+            .observacao(entity.getObservacao())
+            .build();
   }
 }

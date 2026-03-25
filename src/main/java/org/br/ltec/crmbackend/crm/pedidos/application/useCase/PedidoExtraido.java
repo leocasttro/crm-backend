@@ -87,6 +87,7 @@ public class PedidoExtraido {
   private String cpf;
   private String email;
   private String sexo;
+  private List<OpmeItemExtraido> opmeItens = new ArrayList<>();
 
   // ==================== GETTERS E SETTERS (existentes) ====================
 
@@ -470,7 +471,34 @@ public class PedidoExtraido {
     this.sexo = sexo;
   }
 
+  public List<OpmeItemExtraido> getOpmeItens() { return opmeItens; }
+
+  public void setOpmeItens(List<OpmeItemExtraido> opmeItens) {
+    this.opmeItens = opmeItens == null ? new ArrayList<>() : opmeItens;
+  }
   // ==================== TIPOS AUXILIARES ATUALIZADOS ====================
+
+  public static class OpmeItemExtraido {
+    private String descricao;
+    private Integer quantidade;
+    private List<String> marcasAceitas;  // ["MEDTRONIC", "XOMED"]
+    private String marcasNegadas;        // "Não cotar com: Delphi, Osteofix"
+
+    public OpmeItemExtraido(String descricao, Integer quantidade,
+                            List<String> marcasAceitas, String marcasNegadas) {
+      this.descricao = descricao;
+      this.quantidade = quantidade;
+      this.marcasAceitas = marcasAceitas;
+      this.marcasNegadas = marcasNegadas;
+    }
+
+    public String getDescricao() { return descricao; }
+    public void setDescricao(String descricao) { this.descricao = descricao; }
+    public Integer getQuantidade() { return quantidade; }
+    public void setQuatidade(Integer quantidade) { this.quantidade = quantidade; }
+    public List<String> getMarcasAceitas() { return marcasAceitas; }
+    public String getMarcasNegadas() { return marcasNegadas; }
+  }
 
   public static class ProcedimentoExtraido {
     private String codigo;

@@ -53,6 +53,7 @@ public class PedidoBuilder {
   private String cpfPaciente;
   private String emailPaciente;
   private String sexoPaciente;
+  private List<OpmeItem> opmeItens = new ArrayList<>();
 
   // 🔥 NOVO CAMPO - DADOS DE AUTORIZAÇÃO
   private DadosAutorizacao dadosAutorizacao;
@@ -257,6 +258,18 @@ public class PedidoBuilder {
     return this;
   }
 
+  public PedidoBuilder comOpmeItens(List<OpmeItem> opmeItens) {
+    this.opmeItens = opmeItens != null ? new ArrayList<>(opmeItens) : new ArrayList<>();
+    return this;
+  }
+
+  public PedidoBuilder adicionarOpmeItem(OpmeItem item) {
+    if (item != null) {
+      this.opmeItens.add(item);
+    }
+    return this;
+  }
+
   public PedidoBuilder comCriadoEm(LocalDateTime criadoEm) {
     this.criadoEm = criadoEm;
     return this;
@@ -326,7 +339,7 @@ public class PedidoBuilder {
     this.cpfPaciente = null;
     this.emailPaciente = null;
     this.sexoPaciente = null;
-
+    this.opmeItens = new ArrayList<>();
     // 🔥 Reset do dadosAutorizacao
     this.dadosAutorizacao = null;
   }
@@ -381,6 +394,7 @@ public class PedidoBuilder {
             cpfPaciente,
             emailPaciente,
             sexoPaciente,
+            opmeItens,
             null,  // ConsultaPreOperatoria
             dadosAutorizacao  // 🔥 NOVO - DadosAutorizacao
     );

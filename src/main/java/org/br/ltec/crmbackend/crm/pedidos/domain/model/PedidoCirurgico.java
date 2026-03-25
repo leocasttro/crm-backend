@@ -66,6 +66,8 @@ public class PedidoCirurgico {
   // 🔥 NOVO CAMPO - Consulta Pré-Operatória (versão simplificada)
   private ConsultaPreOperatoria consultaPreOperatoria;
   private DadosAutorizacao dadosAutorizacao;
+  private List<OpmeItem> opmeItens = new ArrayList<>();
+
 
   // ==================== CONSTRUTOR SIMPLIFICADO ====================
 
@@ -118,6 +120,7 @@ public class PedidoCirurgico {
     this.emailPaciente = null;
     this.sexoPaciente = null;
     this.consultaPreOperatoria = null;
+    this.opmeItens = new ArrayList<>();
   }
 
   // ==================== CONSTRUTOR COMPLETO ====================
@@ -164,7 +167,7 @@ public class PedidoCirurgico {
           String cpfPaciente,
           String emailPaciente,
           String sexoPaciente,
-
+          List<OpmeItem> opmeItens,
           // 🔥 NOVO CAMPO - Consulta Pré-Operatória
           ConsultaPreOperatoria consultaPreOperatoria,
           DadosAutorizacao dadosAutorizacao) {
@@ -212,7 +215,7 @@ public class PedidoCirurgico {
     this.cpfPaciente = cpfPaciente;
     this.emailPaciente = emailPaciente;
     this.sexoPaciente = sexoPaciente;
-
+    this.opmeItens = opmeItens != null ? new ArrayList<>(opmeItens) : new ArrayList<>();
     // 🔥 NOVO CAMPO
     this.consultaPreOperatoria = consultaPreOperatoria;
     this.dadosAutorizacao = dadosAutorizacao;
@@ -266,6 +269,7 @@ public class PedidoCirurgico {
             dataHora, cuidados, observacoesEspeciais, local
     );
 
+    this.status = new StatusPedido(StatusPedido.Tipo.FATURAMENTO, "Agendamento realizado, aguarda faturamento", "usuário"); // 👈
     this.atualizadoEm = LocalDateTime.now();
   }
 
@@ -596,7 +600,22 @@ public class PedidoCirurgico {
             status.getTipo() == StatusPedido.Tipo.PENDENTE;
   }
 
+//  public void addOpmeItem(OpmeItem item) {
+//    if (opmeItens == null) {
+//      opmeItens = new ArrayList<>();
+//    }
+//    item.setPedido(this);
+//    opmeItens.add(item);
+//  }
+
   // ==================== GETTERS EXISTENTES ====================
+  public List<OpmeItem> getOpmeItens() {
+    return opmeItens != null ? opmeItens : Collections.emptyList();
+  }
+
+  public void setOpmeItens(List<OpmeItem> opmeItens) {
+    this.opmeItens = opmeItens != null ? new ArrayList<>(opmeItens) : new ArrayList<>();
+  }
 
   public PedidoId getId() {
     return id;

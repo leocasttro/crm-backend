@@ -26,18 +26,38 @@ public class PedidoPdfPatterns {
   public static final Pattern PROCEDIMENTO_OPME = Pattern.compile("^(\\d+)\\s+(\\d{8,})\\s+(.+?)(?:\\s+Mesma via de Acesso)?$", Pattern.MULTILINE);
   public static final Pattern PROCEDIMENTO_GUIA = Pattern.compile("\\d{2}\\s*-\\s*\\d{2}\\s+(\\d{8,})\\s+(.+?)\\s+(\\d+)", Pattern.MULTILINE);
 
+  public static final Pattern OPME_BLOCO = Pattern.compile(
+          "OPME\\s*\\n(.*?)(?=\\s*Qtd\\s+Codigo|\\s*\\d+\\s+\\d{6,})",
+          Pattern.DOTALL | Pattern.CASE_INSENSITIVE
+  );
+
+  public static final Pattern OPME_MARCAS_ACEITAS = Pattern.compile("\\(([^)]+)\\)");
+
+  public static final Pattern OPME_NAO_COTAR = Pattern.compile(
+          "Não cotar com:\\s*(.+)", Pattern.CASE_INSENSITIVE
+  );
   // ==================== DADOS DA GUIA ====================
   public static final Pattern NUMERO_GUIA = Pattern.compile("No Guia no Prestador?:(\\d+)");
   public static final Pattern REGISTRO_ANS = Pattern.compile("1 - Registro ANS\\s*(\\d+)");
   public static final Pattern NUMERO_GUIA_OPERADORA = Pattern.compile("3 - Número da Guia Atribuído pela Operadora\\s*(\\d+)");
 
   // ==================== DADOS DO BENEFICIÁRIO ====================
-  public static final Pattern NUMERO_CARTEIRA = Pattern.compile("7 - Número da Carteira\\s*(\\d+)");
-  public static final Pattern VALIDADE_CARTEIRA = Pattern.compile("8 - Validade da Carteira\\s*(\\d{2}/\\d{2}/\\d{4})");
+  public static final Pattern NUMERO_CARTEIRA = Pattern.compile(
+          "7\\s*-\\s*Número\\s+da\\s+Carteira.*?\\n\\s*(\\d+)",
+          Pattern.MULTILINE | Pattern.DOTALL
+  );
+  // Em PedidoPdfPatterns.java
+  public static final Pattern VALIDADE_CARTEIRA = Pattern.compile(
+          "8\\s*-\\s*Validade\\s+da\\s+Carteira.*?\\n\\s*\\d+\\s+(\\d{2}/\\d{2}/\\d{4})",
+          Pattern.MULTILINE | Pattern.DOTALL
+  );
   public static final Pattern CARTAO_NACIONAL_SAUDE = Pattern.compile("11 - Cartão Nacional de Saúde\\s*(\\d+)");
 
   // 🔥 NOVO: Telefone
-  public static final Pattern TELEFONE = Pattern.compile("Tel:?\\.?\\s*\\(?(\\d{2})\\)?\\s*(\\d{4,5})-?(\\d{4})");
+  public static final Pattern TELEFONE = Pattern.compile(
+          "Telefone:\\s*\\((\\d{2})\\)(\\d\\.?\\d{4})-?(\\d{4})",
+          Pattern.MULTILINE
+  );
 
   // 🔥 NOVO: Endereço
   public static final Pattern ENDERECO = Pattern.compile("([^\\n]+?)\\s+CEP:\\s*(\\d{5}-?\\d{3})");

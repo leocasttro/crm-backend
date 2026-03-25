@@ -4,9 +4,11 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
@@ -29,31 +31,7 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
     }
 
     String rawText = extractText(pdfBytes);
-
-    // ============ DEBUG DO TEXTO BRUTO ============
-    System.out.println("=== TEXTO BRUTO (rawText) ===");
-    System.out.println("Tamanho: " + rawText.length() + " caracteres");
-    System.out.println("Primeiros 500 caracteres:");
-    System.out.println(rawText.substring(0, Math.min(500, rawText.length())));
-    System.out.println("==============================");
-
     String text = normalizer.normalize(rawText);
-
-    // ============ DEBUG DO TEXTO NORMALIZADO ============
-    System.out.println("=== TEXTO NORMALIZADO ===");
-    System.out.println("Tamanho: " + text.length() + " caracteres");
-    System.out.println("Primeiros 500 caracteres:");
-    System.out.println(text.substring(0, Math.min(500, text.length())));
-    System.out.println("=========================");
-
-    // ============ DEBUG DOS PADRÕES ============
-    System.out.println("=== VERIFICANDO PADRÕES ===");
-
-    testarPadrao(text, PedidoPdfPatterns.NOME_PACIENTE, "NOME_PACIENTE");
-    testarPadrao(text, PedidoPdfPatterns.DATA_PEDIDO, "DATA_PEDIDO");
-    testarPadrao(text, PedidoPdfPatterns.CID_PRINCIPAL, "CID_PRINCIPAL");
-    testarPadrao(text, PedidoPdfPatterns.PROCEDIMENTO_OPME, "PROCEDIMENTO_OPME");
-    testarPadrao(text, PedidoPdfPatterns.RELATORIO_PRE_OPERATORIO, "RELATORIO_PRE_OPERATORIO");
 
     PedidoExtraido extraido = new PedidoExtraido();
 
@@ -92,7 +70,6 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
     // ==================== DADOS COMPLETOS DO MÉDICO (da guia) ====================
     Matcher mMedCompleto = PedidoPdfPatterns.MEDICO_DADOS_COMPLETOS.matcher(text);
     if (mMedCompleto.find()) {
-      // Se já não tiver nome do médico, usa o da guia
       if (extraido.getMedicoNome() == null) {
         extraido.setMedicoNome(safe(mMedCompleto.group(1)));
       }
@@ -128,6 +105,47 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
       }
     }
 
+    // ==================== OPME ====================
+    List<PedidoExtraido.OpmeItemExtraido> opmeItens = new ArrayList<>();
+
+    Matcher mBloco = PedidoPdfPatterns.OPME_BLOCO.matcher(text);
+    if (mBloco.find()) {
+      String blocoTexto = mBloco.group(1).trim();
+      String marcasNegadas = null;
+
+      Matcher mNaoCotar = PedidoPdfPatterns.OPME_NAO_COTAR.matcher(blocoTexto);
+      if (mNaoCotar.find()) {
+        marcasNegadas = "Não cotar com: " + mNaoCotar.group(1).trim();
+      }
+
+      for (String linha : blocoTexto.split("\\n")) {
+        linha = linha.trim();
+
+        if (linha.startsWith("/t")) {
+          linha = linha.substring(2).trim();
+        }
+
+        if (linha.isBlank()) continue;
+        if (linha.toUpperCase().startsWith("NÃO COTAR")) continue;
+
+        List<String> marcasAceitas = new ArrayList<>();
+        Matcher mMarcas = PedidoPdfPatterns.OPME_MARCAS_ACEITAS.matcher(linha);
+        if (mMarcas.find()) {
+          Arrays.stream(mMarcas.group(1).split(","))
+                  .map(String::trim)
+                  .filter(s -> !s.isBlank())
+                  .forEach(marcasAceitas::add);
+          linha = linha.substring(0, mMarcas.start()).trim();
+        }
+
+        if (!linha.isBlank()) {
+          opmeItens.add(new PedidoExtraido.OpmeItemExtraido(
+                  linha, 1, marcasAceitas, marcasNegadas));
+        }
+      }
+    }
+    extraido.setOpmeItens(opmeItens);
+
     // ==================== PROCEDIMENTOS (formato da guia) ====================
     Matcher mProcGuia = PedidoPdfPatterns.PROCEDIMENTO_GUIA.matcher(text);
     while (mProcGuia.find()) {
@@ -136,7 +154,6 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
       String quantidade = safe(mProcGuia.group(3));
 
       if (codigo != null && codigo.length() >= 6 && descricao != null) {
-        // Evita duplicatas
         boolean exists = procedimentos.stream()
                 .anyMatch(p -> codigo.equals(p.getCodigo()));
         if (!exists) {
@@ -151,9 +168,13 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
     extraido.setRegistroAns(firstGroup(text, PedidoPdfPatterns.REGISTRO_ANS).orElse(null));
     extraido.setNumeroGuiaOperadora(firstGroup(text, PedidoPdfPatterns.NUMERO_GUIA_OPERADORA).orElse(null));
 
-    // ==================== DADOS DO BENEFICIÁRIO ====================
-    extraido.setNumeroCarteira(firstGroup(text, PedidoPdfPatterns.NUMERO_CARTEIRA).orElse(null));
-    extraido.setValidadeCarteira(firstGroup(text, PedidoPdfPatterns.VALIDADE_CARTEIRA).orElse(null));
+    // ==================== DADOS DO BENEFICIÁRIO - NÚMERO CARTEIRA ====================
+    String numeroCarteira = extractNumeroCarteira(text);
+    extraido.setNumeroCarteira(numeroCarteira);
+
+    String validadeCarteira = firstGroup(rawText, PedidoPdfPatterns.VALIDADE_CARTEIRA).orElse(null);
+    extraido.setValidadeCarteira(validadeCarteira);
+    System.out.println("Validade Carteira: '" + validadeCarteira + "'");
     extraido.setCartaoNacionalSaude(firstGroup(text, PedidoPdfPatterns.CARTAO_NACIONAL_SAUDE).orElse(null));
 
     // ==================== DADOS DO CONTRATADO ====================
@@ -167,19 +188,19 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
     extraido.setQtdDiariasSolicitadas(firstGroup(text, PedidoPdfPatterns.QTD_DIARIAS).orElse(null));
     extraido.setPrevisaoUsoOpmepdf(firstGroup(text, PedidoPdfPatterns.PREVISAO_OPME).orElse(null));
 
-    // ==================== INDICAÇÃO CLÍNICA (multilinha) ====================
+    // ==================== INDICAÇÃO CLÍNICA ====================
     Matcher mIndicacao = PedidoPdfPatterns.INDICACAO_CLINICA.matcher(text);
     if (mIndicacao.find()) {
       extraido.setIndicacaoClinica(safe(mIndicacao.group(1).replaceAll("\\s+", " ")));
     }
 
-    // 🔥 NOVO: RELATÓRIO PRÉ-OPERATÓRIO
+    // ==================== RELATÓRIO PRÉ-OPERATÓRIO ====================
     Matcher mRelatorio = PedidoPdfPatterns.RELATORIO_PRE_OPERATORIO.matcher(text);
     if (mRelatorio.find()) {
       extraido.setRelatorioPreOperatorio(safe(mRelatorio.group(1).replaceAll("\\s+", " ")));
     }
 
-    // 🔥 NOVO: ORIENTAÇÕES
+    // ==================== ORIENTAÇÕES ====================
     Matcher mOrientacoes = PedidoPdfPatterns.ORIENTACOES.matcher(text);
     if (mOrientacoes.find()) {
       extraido.setOrientacoes(safe(mOrientacoes.group(1).replaceAll("\\s+", " ")));
@@ -188,32 +209,60 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
     // ==================== DATA DA SOLICITAÇÃO ====================
     extraido.setDataSolicitacao(firstGroup(text, PedidoPdfPatterns.DATA_SOLICITACAO).orElse(null));
 
-    // ==================== TEXTO NORMALIZADO (para debug) ====================
+    // ==================== TEXTO NORMALIZADO ====================
     extraido.setTextoNormalizado(text);
 
     return extraido;
+  }
+
+  /**
+   * Método específico para extrair o número da carteira com múltiplas estratégias
+   */
+  private String extractNumeroCarteira(String text) {
+    // Estratégia 1: Pattern que captura o número na linha após "7 - Número da Carteira"
+    Pattern p1 = Pattern.compile("7\\s*-\\s*Número\\s+da\\s+Carteira.*?\\n\\s*(\\d+)", Pattern.MULTILINE | Pattern.DOTALL);
+    Matcher m1 = p1.matcher(text);
+    if (m1.find()) {
+      return m1.group(1);
+    }
+
+    // Estratégia 2: Pattern que captura qualquer número com 20+ dígitos após "Carteira"
+    Pattern p2 = Pattern.compile("Carteira[^\\d]*(\\d{20,})", Pattern.DOTALL);
+    Matcher m2 = p2.matcher(text);
+    if (m2.find()) {
+      return m2.group(1);
+    }
+
+    // Estratégia 3: Captura da página 1 (Convênio: ... Número: ...)
+    Pattern p3 = Pattern.compile("Convênio:.*?Número:\\s*(\\d+)", Pattern.DOTALL);
+    Matcher m3 = p3.matcher(text);
+    if (m3.find()) {
+      return m3.group(1);
+    }
+
+    // Estratégia 4: Busca qualquer número grande no texto (fallback)
+    Pattern p4 = Pattern.compile("\\b(\\d{20,})\\b");
+    Matcher m4 = p4.matcher(text);
+    if (m4.find()) {
+      return m4.group(1);
+    }
+
+    return null;
   }
 
   // ---------------- helpers ----------------
 
   private String extractText(byte[] pdfBytes) {
     try (PDDocument doc = PDDocument.load(new ByteArrayInputStream(pdfBytes))) {
-      // Primeiro tenta extrair texto normal
       PDFTextStripper stripper = new PDFTextStripper();
       stripper.setSortByPosition(true);
       stripper.setStartPage(1);
       stripper.setEndPage(doc.getNumberOfPages());
 
-      stripper.setParagraphStart("/t");
-      stripper.setWordSeparator(" ");
-      stripper.setLineSeparator("\n");
-
+      System.out.println("Número total de páginas no PDF: " + doc.getNumberOfPages());
       String text = stripper.getText(doc);
+      System.out.println("Texto extraído - total de caracteres: " + text.length());
 
-      System.out.println("Número de páginas: " + doc.getNumberOfPages());
-      System.out.println("Texto extraído (normal): " + text.length() + " caracteres");
-
-      // Se o texto for muito curto (menos de 100 caracteres), provavelmente é PDF scaneado
       if (text.length() < 100) {
         System.out.println("PDF parece ser scaneado. Tentando OCR...");
         return extractTextWithOCR(pdfBytes);
@@ -239,57 +288,23 @@ public class PdfBoxPedidoPdfExtractor implements PedidoPdfExtractor {
     return t.isBlank() ? null : t;
   }
 
-  private void testarPadrao(String text, java.util.regex.Pattern pattern, String nomePadrao) {
-    java.util.regex.Matcher m = pattern.matcher(text);
-    System.out.print(nomePadrao + ": ");
-    if (m.find()) {
-      System.out.println("ENCONTRADO");
-      System.out.println("  Grupo 1: '" + m.group(1) + "'");
-      if (m.groupCount() > 1) {
-        for (int i = 2; i <= m.groupCount(); i++) {
-          System.out.println("  Grupo " + i + ": '" + m.group(i) + "'");
-        }
-      }
-    } else {
-      System.out.println("NÃO ENCONTRADO");
-
-      // Mostra o trecho onde deveria estar
-      if (nomePadrao.equals("NOME_PACIENTE")) {
-        int idx = text.indexOf("Paciente");
-        if (idx > 0) {
-          System.out.println("  Trecho com 'Paciente':");
-          System.out.println("  " + text.substring(Math.max(0, idx-20), Math.min(text.length(), idx+100)));
-        }
-      }
-    }
-  }
-
   private String extractTextWithOCR(byte[] pdfBytes) {
     try (PDDocument document = PDDocument.load(new ByteArrayInputStream(pdfBytes))) {
       PDFRenderer pdfRenderer = new PDFRenderer(document);
       StringBuilder text = new StringBuilder();
 
-      // Configurar o Tesseract
       Tesseract tesseract = new Tesseract();
-
-      // Caminho correto para o tessdata (versão 5)
       String tessdataPath = "/usr/share/tesseract-ocr/5/tessdata/";
       System.out.println("Usando tessdata em: " + tessdataPath);
 
       tesseract.setDatapath(tessdataPath);
-      tesseract.setLanguage("por"); // Português
-
-      // Configurações para melhorar a precisão
+      tesseract.setLanguage("por");
       tesseract.setPageSegMode(6);
       tesseract.setOcrEngineMode(1);
 
       for (int page = 0; page < document.getNumberOfPages(); page++) {
         System.out.println("Processando página " + (page + 1) + " com OCR...");
-
-        // Renderizar com alta resolução
         BufferedImage bim = pdfRenderer.renderImageWithDPI(page, 300);
-
-        // Executar OCR
         String pageText = tesseract.doOCR(bim);
         text.append(pageText).append("\n");
       }
