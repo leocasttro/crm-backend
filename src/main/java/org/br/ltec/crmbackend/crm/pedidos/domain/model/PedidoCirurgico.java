@@ -269,6 +269,7 @@ public class PedidoCirurgico {
             dataHora, cuidados, observacoesEspeciais, local
     );
 
+    this.status = new StatusPedido(StatusPedido.Tipo.FATURAMENTO, "Agendamento realizado, aguarda faturamento", "usuário"); // 👈
     this.atualizadoEm = LocalDateTime.now();
   }
 
